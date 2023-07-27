@@ -1,0 +1,11 @@
+[Unit]
+Description=lv activate rbd devices
+After=rbdmap.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/sbin/lvm vgchange -ay
+
+[Install]
+WantedBy=multi-user.target

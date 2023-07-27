@@ -1,0 +1,22 @@
+---
+- name: "Create {{ bucket.type }}"
+  shell:
+    cmd: "ceph osd crush add-bucket {{ bucket.name }} {{ bucket.type }}"
+  ignore_errors: true
+  when: bucket.type != 'host'
+
+- name: "Create bucket's children"
+  include_tasks: create_crush_bucket.yml
+  loop_control:
+     loop_var: bucket
+  loop: "{{ bucket.children }}"
+  when: bucket.children is defined
+ 
+- name: "Move chidren to parent"
+  shell:
+    cmd: "ceph osd crush move {{ child.name }} {{ bucket.type }}={{ bucket.name }}"
+  loop_control:
+     loop_var: child
+  loop: "{{ bucket.children }}"
+  when: bucket.children is defined
+...

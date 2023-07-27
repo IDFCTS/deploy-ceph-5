@@ -1,0 +1,34 @@
+db_size: 248G
+db_slots: 6
+
+data_devices:
+  - /dev/sda
+  - /dev/sdb
+  - /dev/sdc
+  - /dev/sdd
+  - /dev/sde
+  - /dev/sdf
+  - /dev/sdg
+  - /dev/sdh
+  - /dev/sdi
+  - /dev/sdj
+  - /dev/sdk
+  - /dev/sdl
+  - /dev/sdm
+  - /dev/sdn
+  - /dev/sdo
+  - /dev/sdp
+  - /dev/sdq
+  - /dev/sdr
+  - /dev/sds
+  - /dev/sdt
+  - /dev/sdu
+  - /dev/sdv
+
+db_devices:
+  - /dev/nvme0n1
+  - /dev/nvme1n1
+  - /dev/nvme2n1
+  - /dev/nvme3n1
+
+osd_memory_target: 15G

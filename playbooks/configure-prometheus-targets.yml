@@ -1,0 +1,16 @@
+---
+- hosts: all
+  gather_facts: false
+  serial: 1
+  roles:
+    - configure-prometheus-target
+  vars:
+    exporter_port: 9090
+
+- hosts: mgrs
+  serial: 1
+  roles:
+    - configure-prometheus-target
+  vars:
+    exporter_port: "{{ mgr_port }}"
+    prometheus_job_name: "{{ job_name }}-api"

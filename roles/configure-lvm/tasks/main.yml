@@ -1,0 +1,4 @@
+---
+- name: loop over mounts
+  include: lv_creation.yml
+  with_items: "{{ mount_points }}"

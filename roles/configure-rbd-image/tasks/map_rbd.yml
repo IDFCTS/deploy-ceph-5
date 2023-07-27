@@ -1,0 +1,11 @@
+- name: check if image has watchers
+  shell: 
+    cmd: "rbd --id {{ user_name }} status {{ pool_name }}/{{ item.name }} | grep none"  
+  ignore_errors: true
+  register: available 
+
+- name: map image to the server
+  shell:
+    cmd: "rbd --id {{ user_name }} map {{ pool_name }}/{{ item.name }}"
+  register: device_name
+  when: available.rc == 0

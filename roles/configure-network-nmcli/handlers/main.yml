@@ -1,0 +1,4 @@
+---
+- name: "Restart Networking"
+  shell:
+    cmd: "nmcli networking off && nmcli networking on"

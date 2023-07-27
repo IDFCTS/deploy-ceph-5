@@ -1,0 +1,37 @@
+---
+- block:
+  - name: "Create A record for CIMC/iLO IP address of new server"
+    ipa_dnsrecord:
+      ipa_prot: "https"
+      validate_certs: "yes"
+      ipa_host: 
+      ipa_user: "{{ idm_user }}"
+      ipa_pass: "{{ management_password }}"
+      zone_name: "{{ idm_zone }}"
+      record_type: "A"
+      record_name: '{{ "i" ~ item.server_name }}'
+      record_value: "{{ item.cimc_ip }}"
+      record_ttl: "86400"
+      state: "{{ 'absent' if item.action == 'delete' else 'present' if item.action == 'create' }}"
+    loop: "{{ iservers }}"
+
+  - name: "Create PTR record for CIMC/iLO IP address of new server"
+    ipa_dnsrecord:
+      ipa_prot: "https"
+      validate_certs: "yes"
+      ipa_host: "{{ idm_host }}"
+      ipa_user: "{{ idm_user }}"
+      ipa_pass: "{{ management_password }}"
+      zone_name: "{{ ptr_zone_MM if item.site == 'site' else ptr_zone_site if item.site == 'site' }}"
+      record_type: "PTR"
+      record_name: ""
+      record_value: '{{ "i" ~ item.server_name }}'
+      record_ttl: "86400"
+      state: "{{ 'absent' if item.action == 'delete' else 'present' if item.action == 'create' }}"
+    loop: "{{ iservers }}"
+
+  - name: "include role add ilo or cimc to list"
+    include_role:
+      name: add-ilo-or-cimc-to-list 
+  delegate_to: localhost
+  run_once: true

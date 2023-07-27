@@ -1,0 +1,28 @@
+---
+- name: Check whether the configuration is already set correctly
+  shell: 
+    cmd: "ceph config dump | grep -E {{ service.service }}.*{{ item.key }}.*{{ item.value }} | awk '{print $1, $3, $4}'"  
+  register: config_state
+  loop: "{{ service.configuration }}"
+  delegate_to: "{{ bootstraper }}"
+
+- name: Get service name 
+  shell: 
+    cmd: "ceph config dump | grep -E {{ service.service }} | awk '{ print $1 }' | sort | uniq" 
+  register: service_name
+  when: inventory_hostname in service.service
+  delegate_to: "{{ bootstraper }}"
+
+- name: Debug change
+  debug:
+    msg: "changing configuration of {{ service_name.stdout | default(service.service) }} {{ item.item.key }} to {{ item.item.value }}"
+  when: item.stdout | length == 0
+  loop: "{{ config_state.results }}"
+  delegate_to: "{{ bootstraper }}"
+
+- name: Set configuration if needed
+  shell:
+    cmd: "ceph config set {{ service_name.stdout | default(service.service) }} {{ item.item.key }} {{ item.item.value }}"
+  when: item.stdout | length == 0
+  loop: "{{ config_state.results }}"
+  delegate_to: "{{ bootstraper }}"

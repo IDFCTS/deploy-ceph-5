@@ -1,0 +1,26 @@
+[global]
+bs={{ bs }}
+ioengine={{ ioengine }}
+iodepth={{ iodepth }}
+size={{ size }}
+direct={{ direct }}
+time_based={{ time_based }}
+runtime={{ runtime }}
+filename={{ filename }}
+fsync={{ fsync }}
+
+[seq-read]
+rw=read
+stonewall
+
+[rand-read]
+rw=randread
+stonewall
+
+[seq-write]
+rw=write
+stonewall
+
+[rand-write]
+rw=randwrite
+stonewall

@@ -1,0 +1,16 @@
+---
+
+rsyslog_conf_file: "/etc/rsyslog.conf"
+rsyslog_haproxy_conf: "/etc/rsyslog.d/haproxy.conf"
+haproxy_log_dir: "/var/log/haproxy"
+haproxy_log_file: "{{ haproxy_log_dir }}/haproxy.log"
+haproxy_logrotate_conf: "/etc/logrotate.d/haproxy"
+
+var_log_vg: rootvg
+var_log_lv: var_loglv
+pv_disks: /dev/sda2,/dev/sdb
+
+
+certificates_path: /etc/haproxy/
+proxy_path: /etc/haproxy/haproxy.cfg
+

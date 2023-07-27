@@ -1,0 +1,5 @@
+---
+- hosts: blk
+  roles:
+    - fio-test-server
+  become: yes

@@ -1,0 +1,194 @@
+---
+
+- name: "Create /etc/haproxy/ directory"
+  file:
+    path: /etc/haproxy
+    owner: root
+    group: root
+    state: directory
+
+- name: "Copy certificates to the client"
+  template:
+    src: "cert.j2"
+    dest: "/etc/haproxy/{{ item.cert_name }}"
+  when: item.cert_name is defined
+  with_items: "{{ binds }}"
+
+- name: "Copy haproxy repo"
+  template:
+    src: "haproxy.repo.j2"
+    dest: "/etc/yum.repos.d/ose.repo"
+    
+- name: "Install haproxy20 package"
+  yum:
+    name:
+      - haproxy20
+      - lvm2
+    state: latest
+
+- name: "Change haproxy20 service to haproxy"
+  file:
+    path: /usr/lib/systemd/system/haproxy20.service
+    state: absent
+  
+- name: "Creating VG for logs"
+  lvg:
+    vg: "{{ var_log_vg }}"
+    pvs: "{{ pv_disks }}"
+  ignore_errors: yes
+
+- name: "Increase the size of /var/log"
+  lvol:
+    vg: "{{ var_log_vg }}"
+    lv: "{{ var_log_lv }}"
+    size: "+100%FREE"
+    resizefs: true
+  ignore_errors: yes
+
+- name: "Allow different forwording port in SELinux"
+  shell:
+    cmd: "setsebool -P haproxy_connect_any 1"
+
+- name: "Change the ownership of the logfile to haproxy"
+  file:
+    path: "{{ haproxy_log_dir }}"
+    recurse: yes
+    owner: "haproxy"
+    group: "haproxy"
+
+- name: "Create the haproxy logfile"
+  file:
+    path: "{{ haproxy_log_file }}"
+    state: touch
+    mode: 0644
+    owner: "haproxy"
+    group: "haproxy"
+
+- name: "Enable UDP syslog reception in rsyslog.conf"
+  lineinfile:
+    path: "{{ rsyslog_conf_file }}"
+    regexp: '^#$ModLoad imudp'
+    line: "$ModLoad imudp"
+
+- name: "Enable UDP syslog reception in rsyslog.conf"
+  lineinfile:
+    path: "{{ rsyslog_conf_file }}"
+    regexp: '^#$UDPServerRun 514'
+    line: "$UDPServerRun 514"
+    
+- name: "Configure separate logfiles for haproxy"
+  file:
+    path: "{{ rsyslog_haproxy_conf }}"
+    state: touch
+    mode: 0644
+
+- name: "Edit the configuration file for haproxy logs"
+  template:
+    src: templates/rsyslog_haproxy.j2
+    dest: "{{ rsyslog_haproxy_conf }}"
+
+- name: "Restart rsyslog service"
+  service:
+    name: rsyslog
+    state: restarted
+
+- name: "Add haproxy logrotate configuration"
+  template:
+    src: "logrotate.j2"
+    dest: "{{ haproxy_logrotate_conf }}"
+    owner: root
+    group: root
+    mode: 0644
+
+- name: "CHECKING HAPROXY: copying haproxy configuration template to an arbitrary location"
+  become: yes
+  template:
+    src: templates/proxy.j2
+    dest: "/tmp/haproxy_config"
+    backup: yes
+  when: ansible_check_mode
+  check_mode: no
+
+- name: "CHECKING HAPROXY: Validate the syntax of the tested haproxy configuration"
+  become: yes
+  command: haproxy -c -V -f "/tmp/haproxy_config"
+  register: valid_reg_check
+  when: ansible_check_mode
+  check_mode: no 
+
+- name: copying haproxy configuration template to its destination
+  become: yes
+  template:
+    src: templates/proxy.j2
+    dest: "{{ proxy_path }}"
+    backup: yes
+  register: configuration
+
+- name: Validate the syntax of the new haproxy configuration
+  become: yes
+  command: haproxy -c -V -f "{{ proxy_path }}"
+  register: valid_reg
+  when: not ansible_check_mode
+
+- set_fact:
+    valid_reg_result: "{{ valid_reg_check if ansible_check_mode  else valid_reg }}"
+
+- name: "Create the HAProxy20 service"
+  copy:
+    src: haproxy.service
+    dest: /usr/lib/systemd/system/haproxy.service
+    owner: root
+    group: root
+    mode: 0644
+
+- name: "daemon reload"
+  shell: systemctl daemon-reload
+
+- name: "create the var lib haproxy"
+  file:
+    path: /var/lib/haproxy
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+- name: "set SELinux context to socket file"
+  shell: semanage fcontext -a -t haproxy_var_lib_t {{ item }}
+  ignore_errors: yes
+  with_items:
+    - /var/lib/haproxy\(/.*\)*
+    - /var/lib/haproxy
+
+- name: "SELinux restorecon to socket file"
+  shell: restorecon -R -v /var/lib/haproxy/*
+
+- name: "SELinux restorecon to var lib haproxy directory"
+  shell: restorecon -R -v /var/lib/haproxy
+
+- name: Make sure the haproxy is running
+  become: yes
+  service:
+    name: haproxy
+    state: started
+    enabled: yes
+
+- name: Reload proxy service if the configurations have changed
+  become: yes
+  service:
+    name: haproxy
+    state: reloaded
+    enabled: yes
+  when: valid_reg_result.rc == 0 and configuration.changed
+
+- name: "Copy crontab for logrotate hourly"
+  copy:
+    src: logrotate_cron
+    dest: /etc/cron.hourly/logrotate
+    owner: root
+    group: root
+    mode: u=rwx
+
+- name: "Remove logrotate file from cron.daily"
+  file:
+    path: "/etc/cron.daily/logrotate"
+    state: absent

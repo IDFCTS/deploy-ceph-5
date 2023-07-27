@@ -1,0 +1,66 @@
+---
+- name: "create erasure profiles"
+  shell:
+    cmd: ceph osd erasure-code-profile set {{ item.name }} k={{ item.k }} m={{ item.m }} crush-failure-domain={{ item.failure_domain }} --force
+  with_items: "{{ profiles }}"
+  when: profiles is defined
+
+- name: "check if pool exists"
+  shell:
+    cmd: ceph osd pool get "{{ item.name }}" size 
+  register: check
+  ignore_errors: true
+
+- name: "If does not exists"
+  block:
+    - name: "replicated"
+      block:
+        - name: "create the pool"
+          shell:
+            cmd: ceph osd pool create {{ item.name }} {{ item.pgs }} {{ item.pgs }} {{ item.mode }}
+      when: item.mode == "replicated"
+
+    - name: "erasure"
+      block:
+        - name: "create the pool"
+          shell:
+            cmd: ceph osd pool create {{ item.name }} {{ item.pgs }} {{ item.pgs }} {{ item.mode }} {{ item.profile }}
+      when: item.mode == "erasure"
+  when: check.rc != 0
+
+- name: "edit num of pgs"
+  shell:
+    cmd: ceph osd pool set {{ item.name }} pg_num {{ item.pgs }} --yes-i-really-mean-it
+  when: 
+    - item.pgs is defined
+    - (item.autoscale_mode is not defined) or ((item.autoscale_mode is defined) and (item.autoscale_mode != "on"))
+
+- name: "edit num of pgps"
+  shell:
+    cmd: ceph osd pool set {{ item.name }} pgp_num {{ item.pgs }} --yes-i-really-mean-it
+  when:
+    - item.pgs is defined
+    - (item.autoscale_mode is not defined) or ((item.autoscale_mode is defined) and (item.autoscale_mode != "on"))
+
+- name: "edit replication factor"
+  shell:
+    cmd: ceph osd pool set {{ item.name }} size {{ item.replicate }}
+  when: item.replicate is defined
+
+- name: "enable the {{ item.application }} application"
+  shell:
+    cmd: ceph osd pool application enable {{ item.name }} {{ item.application }}
+  when: item.application is defined
+
+- name: "set pg_autoscaler"
+  block:
+    - shell:
+        cmd: ceph mgr module enable pg_autoscaler
+    - shell:
+        cmd: ceph osd pool set {{ item.name }} pg_autoscale_mode {{ item.autoscale_mode }}
+  when: item.autoscale_mode is defined
+
+- name: "set crush_rule id"
+  shell:
+    cmd: ceph osd pool set {{ item.name }} crush_rule {{ item.rule_name }}
+  when: item.rule_name is defined

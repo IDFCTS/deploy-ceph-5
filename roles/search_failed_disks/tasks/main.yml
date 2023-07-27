@@ -1,0 +1,10 @@
+---
+
+- include: copy_script.yml
+
+- name: 'create cronjob that runs the script'
+  cron:
+    name: 'script that looks for failed disks'
+    minute: '*'
+    job: '/var/lib/custom-metrics-scripts/failed-disks-lookup.sh'
+...

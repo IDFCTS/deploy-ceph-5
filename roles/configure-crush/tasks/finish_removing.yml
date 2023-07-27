@@ -1,0 +1,57 @@
+---
+- name: "get existing rules"
+  shell:
+    cmd: ceph osd crush rule ls
+  register: test_rules
+  when: rules is defined
+
+- name: "get existing erasure profiles"
+  shell:
+    cmd: ceph osd erasure-code-profile ls
+  register: test_profiles
+  when: profiles is defined
+
+- name: "set rules and profiles names"
+  set_fact:
+    rules_names: "{{ rules | default([]) | map(attribute='name') | list | flatten }}"
+    profiles_names: "{{ profiles | default([]) | map(attribute='name') | list | flatten }}"
+
+- name: "remove crush rules"
+  shell:
+    cmd: ceph osd crush rule rm {{ item }}
+  when:
+    - rules is defined
+    - item not in rules_names
+  with_items: "{{ test_rules.stdout.split('\n') }}"
+  ignore_errors: true
+
+- name: "remove erasure-profiles"
+  shell:
+    cmd: ceph osd erasure-code-profile rm {{ item }}
+  when: 
+    - profiles is defined
+    - item not in profiles_names
+  with_items: "{{ test_profiles.stdout.split('\n') }}"
+  ignore_errors: true
+
+- name: set roots and racks names
+  set_fact:
+    roots_names: "{{ roots | map(attribute='name') | default([]) | list | flatten }}"
+    racks_names: "{{ roots | map(attribute='racks') | default([]) | list | flatten | map(attribute='name') | default([]) | list | flatten }}"
+  ignore_errors: true
+
+- name: remove not needed racks
+  shell:
+    cmd: ceph osd crush remove {{ item }}
+  when:
+    - racks_names is defined
+    - item not in racks_names
+  with_items: "{{ test_racks.stdout.split('\n') }}"
+
+- name: remove not needed roots
+  shell:
+    cmd: ceph osd crush remove {{ item }}
+  when:
+    - roots_names is defined
+    - item not in roots_names
+  with_items: "{{ test_roots.stdout.split('\n') }}"

@@ -1,0 +1,20 @@
+---
+- name: create the service file for dmesg
+  template:
+    src: dmesg.service
+    dest: /etc/systemd/system/dmesg.service
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: create the log file for dmesg
+  file:
+    path: /var/log/dmesg
+    state: touch
+
+- name: enable the service and restart
+  systemd:
+    name: dmesg
+    enabled: yes
+    state: restarted
+    daemon_reload: yes

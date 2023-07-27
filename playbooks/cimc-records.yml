@@ -1,0 +1,15 @@
+---
+- hosts: ceph-servers
+  gather_facts: no
+  vars_prompt:
+    - name: prompt_management_password
+      prompt: "Enter Your Management Password"
+  tasks:
+    - name: "Set Management Password"
+      set_fact: 
+        management_password: "{{ prompt_management_password }}"
+
+- hosts: blk
+  gather_facts: no
+  roles:
+    - add-cimc-a-record

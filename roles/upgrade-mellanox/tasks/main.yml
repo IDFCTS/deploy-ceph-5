@@ -1,0 +1,40 @@
+---
+- name: Install commands
+  yum:
+    name: mstflint
+    state: present
+
+- name: Create empty array
+  set_fact:
+    nics: []
+
+- name: Get mellanox location
+  shell:
+    cmd: lspci -vvv | grep Mellanox | grep "{{ nic_model }}" | grep "\." | awk 'NR % 2 == 1'
+  register: nics_raw
+
+- name: Create list from the nics
+  set_fact:
+    nics: "{{ nics + [item.split()[0]] }}"
+  with_items: "{{ nics_raw.stdout_lines }}"
+
+- name: Delete folder if exists
+  file:
+    path: /tmp/fw
+    state: absent
+    force: yes
+
+- name: Create folder
+  file:
+    path: /tmp/fw
+    state: directory
+
+- name: Copy the firmware and unzip
+  unarchive:
+    src: "{{ firmware_filename }}.tar.gz"
+    dest: "/tmp/fw/"
+
+- name: Upgrade the nics
+  shell:
+    cmd: "mstflint -d {{ item }} -i /tmp/fw/{{ firmware_filename }}.signed.bin burn"
+  with_items: "{{ nics }}"

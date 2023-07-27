@@ -1,0 +1,59 @@
+- name: Allow rbd use in lvs
+  template:
+    src: "lvm.conf.j2"
+    dest: "/etc/lvm/lvm.conf"
+
+- name: Copy lv activate rbd service
+  template:
+    src: "lv-activate-rbd.service.j2"
+    dest: "/usr/lib/systemd/system/lv-activate-rbd.service"
+  
+- name: enable lv-activate-rbd
+  service:
+    name: lv-activate-rbd
+    state: restarted
+    enabled: yes
+
+- name: Check if lv exists
+  shell: "lvs | grep {{ item.lv_name }} | grep {{ item.vg_name }}" 
+  register: lv_exists # rc 0: exists !0: not exists
+  ignore_errors: yes
+
+- name: Create/Extend the vg
+  lvg:
+    vg: "{{ item.vg_name }}"
+    pvs: "{{ item.device }}"
+
+- name: Create the lv
+  lvol:
+    vg: "{{ item.vg_name }}"
+    lv: "{{ item.lv_name }}"
+    size: "{{ item.size | default(lv_size) }}"
+  when: lv_exists.rc != 0
+
+- name: create xfs on the disk
+  filesystem:
+    fstype: xfs 
+    dev: "/dev/{{ item.vg_name }}/{{ item.lv_name }}"
+  when: lv_exists.rc != 0
+
+- name: Extend the lv
+  lvol:
+    vg: "{{ item.vg_name }}"
+    lv: "{{ item.lv_name }}"
+    size: "{{ item.size | default(lv_size) }}"
+    resizefs: yes
+  when: lv_exists.rc == 0
+
+- name: mount the rbd images
+  mount:
+    path: "{{ item.path }}"
+    src: "/dev/{{ item.vg_name }}/{{ item.lv_name }}"
+    fstype: xfs
+    opts: defaults,_netdev
+    state: mounted
+
+- name: Add mount to fstab
+  lineinfile:
+    path: '/etc/fstab'
+    line: "/dev/{{ item.vg_name }}/{{ item.lv_name }} {{ item.path }} xfs defaults,_netdev 0 0"

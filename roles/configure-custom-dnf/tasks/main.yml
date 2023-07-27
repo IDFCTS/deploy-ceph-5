@@ -1,0 +1,6 @@
+---
+- name: "Create New .repo Files"
+  include_tasks: create-repofile.yml
+  with_items: "{{ repofiles }}"
+  loop_control:
+    loop_var: repo_file

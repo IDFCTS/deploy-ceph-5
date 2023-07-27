@@ -1,0 +1,6 @@
+data_devices:
+  - /dev/sda
+  - /dev/sdb
+  - /dev/sdc
+
+osd_memory_target: 1G

@@ -1,0 +1,17 @@
+---
+- name: "Turn on the lldpad sevice in new servers"
+  include: "turn-on-lldp.yml" 
+
+- name: "create dictionary"
+  include: "create-dictionary.yml"
+  with_items: "{{ active_interfaces }}"
+
+- debug:
+    msg: "{{ item.key }} "
+  with_dict: "{{ switches }}"
+  when: item.key[3:6] == 'dat'
+
+
+#- name: "Set the new inventory for the configure-switch-interfaces roles"
+#  include: "create-var-file.yml"
+...

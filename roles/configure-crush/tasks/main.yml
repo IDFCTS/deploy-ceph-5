@@ -1,0 +1,17 @@
+---
+- include_tasks: create_crush_bucket.yml
+  with_items:
+    - "{{ crush_hierarchy }}"
+  loop_control:
+    loop_var: bucket
+
+- name: "configure crush rules"
+  include: configure_crush_rules.yml
+
+- name: "configure pools"
+  include: configure_pools.yml
+  with_items: "{{ pools }}"
+  when: pools is defined
+
+- name: "finish removing"
+  include: finish_removing.yml

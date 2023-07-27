@@ -1,0 +1,52 @@
+---
+sysctl_files:
+  - path: "/etc/sysctl.d/ceph-tuning.conf"
+    sysctls:
+      - name: "fs.aio-max-nr"
+        value: "1048576"
+      - name: "fs.file-max"
+        value: "26234859"
+      - name: "vm.zone_reclaim_mode"
+        value: "0"
+      - name: "vm.swappiness"
+        value: "10"
+      - name: "vm.min_free_kbytes"
+        value: "4194303"
+
+log_to_file: true
+
+cephadm_ssh_user: "cloud-user"
+
+mgr_port: "9283"
+
+monitor_systemd: true
+services_monitor_regex: "ceph-osd.*|sshd.service"
+
+rgw_port: 80
+cache_port: 80
+
+######## FIO PARAMS ########
+bs: 4k
+ioengine: libaio
+iodepth: 128
+size: 10G
+direct: 1
+time_based: 1
+runtime: 900
+
+rand_read_require: 1
+seq_write_require: 1
+###########################
+
+servers_group_name: "ceph-servers"
+
+dns_action: configure_all_domains
+dns_domains:
+  - name: storage-internal.example.com
+    records:
+      - name: "{{ inventory_hostname }}"
+        ip: "{{ ansible_default_ipv4.address }}"
+        comment: "DNS for ssh to {{ ansible_hostname }}"
+        disabled: false
+        
+domain_name: "example.com storage-internal.example.com"

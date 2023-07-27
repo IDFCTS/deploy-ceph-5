@@ -1,0 +1,6 @@
+---
+- hosts: bootstraps
+  roles: 
+    - cephadm-radosgw
+  become: true
+

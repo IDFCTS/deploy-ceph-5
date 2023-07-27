@@ -1,0 +1,4 @@
+---
+- name: "Delete and Add Team-Slave if Connection Exists in The Wrong Team"
+  shell:
+    cmd: nmcli con del {{ interface }} && nmcli con add type team-slave ifname {{ interface }} con-name {{ interface }} master {{ team.name }}

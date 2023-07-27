@@ -1,0 +1,3 @@
+idm_user: "{{ ansible_ssh_user }}"
+idm_zone: "example.com."
+ipa_host: 

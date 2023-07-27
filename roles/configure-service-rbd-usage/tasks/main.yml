@@ -1,0 +1,12 @@
+---
+- name: Set mount point name
+  set_fact:
+    mount_point_service_name: "{{ mount_point.split('/') | select() | join('-') }}.mount"
+  
+- name: Override configurations for rbd
+  lineinfile:
+    path: "{{ service_path }}"
+    firstmatch: yes
+    regexp: "After=.*"
+    line: "After={{ mount_point_service_name }}"
+  notify: restart service

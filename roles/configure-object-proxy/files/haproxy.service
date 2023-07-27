@@ -1,0 +1,13 @@
+[Unit]
+Description=HAProxy20 Load Balancer
+After=syslog.target network.target
+
+[Service]
+ExecStart=/sbin/haproxy -W -f /etc/haproxy/haproxy.cfg -p /run/haproxy.pid -S /run/haproxy-master.sock
+ExecReload=/bin/kill -USR2 $MAINPID
+KillMode=mixed
+Type=forking
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

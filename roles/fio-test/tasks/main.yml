@@ -1,0 +1,37 @@
+---
+- name: 'Create textfile directory'
+  file:
+    path: "/tmp/fio"
+    state: directory
+    mode: 0755
+
+- name: 'Copy FIO test file'
+  template: 
+    src: fio-test.fio.j2
+    dest: /tmp/fio/fio-test.fio
+
+- name: 'Install FIO package'
+  yum: 
+   name: fio
+   state: present
+   disable_gpg_check: yes
+  become: true
+
+- name: 'Run FIO test'
+  shell: fio /tmp/fio/fio-test.fio > /tmp/fio/fio_results
+
+- name: 'Get rand read into file'
+  shell: cat /tmp/fio/fio_results | grep IOPS -B 1 | grep rand-read -A 1 | grep IOPS | cut -d '=' -f 2 | cut -d ',' -f 1 | sed 's/\.//g' | sed 's/k/00/g' > /tmp/fio/fio_results_rand_read
+
+- name: 'Get seq write into file'
+  shell: cat /tmp/fio/fio_results | grep IOPS -B 1 | grep seq-write -A 1 | grep IOPS | cut -d '=' -f 2 | cut -d ',' -f 1 | sed 's/\.//g' | sed 's/k/00/g' > /tmp/fio/fio_results_seq_write
+
+- name: 'Check if rand read is higher than {{ rand_read_require }}'
+  command: cat /tmp/fio/fio_results_rand_read
+  register: command_result
+  failed_when: "command_result.stdout | int < rand_read_require"
+
+- name: 'Check if seq write is higher than  {{ seq_write_require }}'
+  command: cat /tmp/fio/fio_results_seq_write
+  register: command_result
+  failed_when: "command_result.stdout | int < seq_write_require"

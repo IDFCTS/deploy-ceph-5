@@ -1,0 +1,22 @@
+---
+- hosts: ceph-servers
+  roles:
+    - configure-resolv
+    - configure-data-ca
+    - configure-custom-dnf
+    - upgrade-mellanox
+  become: true
+  tags:
+    - never
+    - new
+  vars:
+    ansible_user: root
+    ansible_password: "{{ default_root_pass }}"
+
+- hosts: ceph-servers
+  roles:
+    - upgrade-mellanox
+  become: true
+  tags:
+    - never
+    - running

@@ -1,0 +1,105 @@
+---
+- name: "Obtain the current boot order"
+  delegate_to: localhost
+  uri:
+    url: 'https://i{{ inventory_hostname }}/redfish/v1/systems/1/Bios/Boot/Settings'
+    return_content: yes
+    user: "{{ username }}"
+    password: "{{ user_pass }}"
+    force_basic_auth: yes
+    validate_certs: no
+    method: GET
+    status_code: 200
+  register: boot_settings_info
+ 
+- name: creating a list with the current boot order
+  delegate_to: localhost
+  set_fact:
+    boot_order: "{{ (((boot_settings_info.content | from_json).PersistentBootConfigOrder | list)) }}"
+
+- name: create a list with the new boot order
+  delegate_to: localhost
+  template:
+    src: new_boot_order.j2
+    dest: /tmp/new_boot_order.yml
+
+- name: saving the new boot order list
+  delegate_to: localhost
+  include_vars:
+    file: /tmp/new_boot_order.yml
+
+- name: "Change boot order nic"
+  delegate_to: localhost
+  uri:
+    url: 'https://i{{ inventory_hostname }}/redfish/v1/systems/1/Bios/Boot/Settings/'
+    return_content: yes
+    user: "{{ username }}"
+    password: "{{ user_pass }}"
+    force_basic_auth: yes
+    validate_certs: no
+    method: PATCH
+    body:
+      '{"PersistentBootConfigOrder": {{ new_boot_order | to_json }}}'
+    body_format: json
+    headers:
+      Content-Type: 'application/json'
+    status_code: 200
+
+- name: "Change boot target to pxe"
+  delegate_to: localhost
+  uri:
+    url: 'https://i{{ inventory_hostname }}/redfish/v1/systems/1/'
+    return_content: yes
+    user: "{{ username }}"
+    password: "{{ user_pass }}"
+    force_basic_auth: yes
+    validate_certs: no 
+    method: PATCH
+    body:
+      '{"Boot": {"BootSourceOverrideTarget": "Pxe"}}'
+    body_format: json
+    headers:
+      Content-Type: 'application/json'
+    status_code: 200
+
+- name: "set the pxe boot to be one time boot"
+  delegate_to: localhost
+  uri:
+    url: 'https://i{{ inventory_hostname }}/redfish/v1/systems/1/'
+    return_content: yes
+    user: "{{ username }}"
+    password: "{{ user_pass }}"
+    force_basic_auth: yes
+    validate_certs: no
+    method: PATCH
+    body:
+      '{"Boot": {"BootSourceOverrideEnabled": "Once"}}'
+    body_format: json
+    headers:
+      Content-Type: 'application/json'
+    status_code: 200
+
+- name: "reboot the server"
+  delegate_to: localhost
+  uri:
+    url: 'https://i{{ inventory_hostname }}/redfish/v1/systems/1/Actions/ComputerSystem.Reset/'
+    return_content: yes
+    user: "{{ username }}"
+    password: "{{ user_pass }}"
+    force_basic_auth: yes
+    validate_certs: no 
+    method: POST
+    body:
+      '{"ResetType": "ForceRestart"}}'
+    body_format: json
+    headers:
+      Content-Type: 'application/json'
+    status_code: 200
+
+- name: delete the boot order file
+  delegate_to: localhost
+  file:
+    path: /tmp/new_boot_order.yml
+    state: absent
+
+...

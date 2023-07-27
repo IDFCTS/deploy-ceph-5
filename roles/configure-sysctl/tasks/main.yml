@@ -1,0 +1,6 @@
+---
+- name: "Create New Sysctl Files"
+  include_tasks: create-sysctl.yml
+  with_items: "{{ sysctl_files }}"
+  loop_control:
+    loop_var: sysctl_file

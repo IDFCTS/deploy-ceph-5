@@ -1,0 +1,4 @@
+---
+custom_metrics_scripts_path: /var/lib/custom-metrics-scripts
+additional_cron_minute: "*/1"
+pgdump_minute: "*/5"

@@ -1,0 +1,41 @@
+---
+- name: Add warning banner to crit prod servers
+  copy:
+    dest: /etc/profile.d/motd.sh
+    mode: 0777
+    content: |
+      echo -e "\033[31m###############################################################################"
+      echo -e "\033[31m##                                                                           ##"
+      echo -e "\033[31m##                                                                           ##"
+      echo -e "\033[31m##                                                                           ##"
+      echo -e "\033[31m##                                                                           ##"
+      echo -e "\033[31m##                             !!! WARNING !!!                               ##"
+      echo -e "\033[31m##                     !!! YOU ARE IN CRITICAL PROD !!!                      ##"
+      echo -e "\033[31m##                                                                           ##"
+      echo -e "\033[31m##                                                                           ##"
+      echo -e "\033[31m##                                                                           ##"
+      echo -e "\033[31m##                                                                           ##"
+      echo -e "\033[31m###############################################################################"
+  when: severity == "crit"
+
+- name: Add red prompt to crit prod servers
+  lineinfile:
+    path: /etc/bashrc
+    line: PS1='\[\033[31m\][\u@\h \W]\$\[\033[0m\] '
+    regexp: "PS1=\'.*\\\\033.3.m..*\\\\u@\\\\h \\\\W.\\\\..*\\\\033.0m.* \'"
+    state: present
+  when: severity == "crit"
+
+- name: Remove motd for critical prod if exists
+  file:
+    path: /etc/profile.d/motd.sh
+    state: absent
+  when: severity == "pre"
+
+- name: Add blue prompt to pre-prod servers
+  lineinfile:
+    path: /etc/bashrc
+    line: PS1='\[\033[34m\][\u@\h \W]\$\[\033[0m\] '
+    regexp: "PS1=\'.*\\\\033.3.m..*\\\\u@\\\\h \\\\W.\\\\..*\\\\033.0m.* \'"
+    state: present
+  when: severity == "pre"

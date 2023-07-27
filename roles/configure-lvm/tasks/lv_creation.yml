@@ -1,0 +1,43 @@
+---
+- name: create mount's directories
+  file: 
+    path: "{{ item.path }}"
+    state: directory
+    
+- name: Check if lv exists
+  shell: "lvs | grep {{ item.lv_name }}"
+  register: lv_exists # rc 0: exists !0: not exists
+  ignore_errors: yes
+
+- name: Create/Extend the vg
+  lvg:
+    vg: "{{ item.vg_name }}"
+    pvs: "{{ item.device }}"
+
+- name: Create the lv
+  lvol:
+    vg: "{{ item.vg_name }}"
+    lv: "{{ item.lv_name }}"
+    size: 100%PVS
+  when: lv_exists.rc != 0
+
+- name: create xfs on the disk
+  filesystem:
+    fstype: xfs 
+    dev: "/dev/{{ item.vg_name }}/{{ item.lv_name }}"
+  when: lv_exists.rc != 0
+
+- name: Extend the lv
+  lvol:
+    vg: "{{ item.vg_name }}"
+    lv: "{{ item.lv_name }}"
+    size: 100%PVS
+    resizefs: yes
+  when: lv_exists.rc == 0
+
+- name: mount the lv
+  mount:
+    path: "{{ item.path }}"
+    src: "/dev/{{ item.vg_name }}/{{ item.lv_name }}"
+    fstype: xfs
+    state: mounted

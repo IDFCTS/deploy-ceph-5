@@ -1,0 +1,4 @@
+---
+custom_metrics_scripts_path: /var/lib/custom-metrics-scripts
+usage_cron_minute: "0"
+quota_cron_minute: "0"

@@ -1,0 +1,11 @@
+---
+service_type: rgw
+service_id: {{ rgw_realm }}.{{ rgw_zone }}
+placement:
+  label: "rgw_{{ rgw_realm }}_{{ rgw_zone }}"
+spec:
+  rgw_realm: {{ rgw_realm }}
+  rgw_zone: {{ rgw_zone }}
+networks:
+  - {{ public_network }}
+

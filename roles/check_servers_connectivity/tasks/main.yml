@@ -1,0 +1,38 @@
+---
+
+- name: 'make sure firewall service is deactivated and disabled'
+  service:
+    name: firewalld
+    state: stopped
+    enabled: no
+
+- name: 'get list of ip addresses from existing mon in cluster'
+  shell:
+    cmd: "ceph osd dump | grep -F osd. | awk '{print $14, $15}' | cut -d : -f 4,6 | sort | uniq | tr ':' '\n'"
+  register: ip_addresses 
+  delegate_to: "{{ mon }}"
+
+- name: create check_connectivity directory
+  file:
+    path: /opt/check_connectivity
+    state: directory
+    mode: 0644
+    owner: root
+    group: root
+
+- name: create ip list file
+  copy: 
+    content: "{{ ip_addresses.stdout }}"
+    dest: /opt/check_connectivity/ip_list
+
+- name: 'teams connection test'
+  include_tasks: general_tasks.yml
+  loop: "{{ teams }}"
+
+- name: 'remove servers list directory'
+  file:
+    path: /opt/check_connectivity
+    state: absent
+
+...
+

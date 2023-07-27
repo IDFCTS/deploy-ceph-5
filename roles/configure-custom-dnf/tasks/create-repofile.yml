@@ -1,0 +1,17 @@
+---
+- name: "Create .repo File"
+  copy:
+    content: ""
+    dest: "/etc/yum.repos.d/{{ repo_file.name }}.repo"
+    force: yes
+    owner: root
+    group: root
+    mode: 0644
+
+- name: "Configure .repo File"
+  lineinfile:
+    dest: "/etc/yum.repos.d/{{ repo_file.name }}.repo"
+    line: "{{ lookup('template', 'repofile.j2') }}"
+  with_items: "{{ repo_file.repo_sections }}"
+  loop_control: 
+    loop_var: repo_section

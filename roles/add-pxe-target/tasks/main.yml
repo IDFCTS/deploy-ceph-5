@@ -1,0 +1,25 @@
+---
+# tasks file for roles/configure-pxe-target
+
+- name: Combine defaults with custom configuration
+  set_fact:
+    pxe_target: "{{ defaults | combine(pxe_configuration, recursive=True) }}"    
+    delegate_to: localhost
+
+- name: Configure pxe target 
+  cobbler_system: 
+    host: "{{ pxe_target.cobbler_server }}"
+    password: "{{ cobbler_pass }}"
+    name: "{{ pxe_target.name }}"
+    properties: "{{ pxe_target.properties }}"
+    interfaces: "{{ pxe_target.interfaces }}"
+    sync: yes
+    state: "{{ pxe_target.state | default(omit) }}"
+  register: result
+  delegate_to: localhost
+
+- name: Wait for cobbler to sync on change
+  pause: 
+    seconds: 4
+  when: result.changed
+  delegate_to: localhost

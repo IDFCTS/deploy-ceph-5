@@ -1,0 +1,47 @@
+sanity_check:
+  processors:
+    processor_cores: 64
+    processor_count: 2
+    memtotal_mb: 515412
+  disks:
+    - sda
+    - sdb
+    - nvme0n1
+    - nvme1n1
+    - nvme3n1
+    - nvme2n1
+    - nvme5n1
+    - nvme4n1
+    - nvme7n1
+    - nvme8n1
+    - nvme6n1
+    - nvme9n1
+  ipv4_addresses: 2   
+
+teams:
+  - name: "storage"
+    team_name: "storage"
+    type: "lacp"
+    raw_subnet: "192.168.16"
+    ip4: "{{ ansible_host }}"
+    prefix: 24
+    gw4: "192.168.16.254"
+    mtu: 9000
+    ifs:
+      - "ens4f0"
+      - "ens7f0"
+    runner: "lacp"
+    never_default: "no"
+
+  - name: "sync"
+    team_name: "sync"
+    type: "lacp"
+    raw_subnet: "192.168.17"
+    subnet: "192.168.17"
+    prefix: 24
+    gw4: "192.168.17.254"
+    mtu: 9000
+    ifs:
+      - "ens4f1"
+      - "ens7f1"
+    runner: "lacp"

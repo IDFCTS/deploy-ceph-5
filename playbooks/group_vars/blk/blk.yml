@@ -1,0 +1,156 @@
+---
+image_registry: "registry.example.com/rhceph/rhceph-5-rhel8:16.2.0-152"
+registry_url: "registry.example.com"
+
+admin_group: "blk-admins"
+
+severity: "crit"
+
+bootstraper: block
+
+job_name: block
+prometheus_job_name: "{{ job_name }}"
+prometheus_site: data
+servers_group_name: blk
+
+pxe_configuration:
+  cobbler_server: cobbler.example.com
+  properties:
+    profile: rhel-8.4-x86_64
+    gateway: 192.168.4.254
+    kickstart: /var/lib/cobbler/kickstarts/rhel-8sw-blk.ks
+  interfaces: 
+    enp1s0: 
+      static: yes
+      macaddress: "{{ mac }}"
+      ipaddress: "{{ ansible_host }}"
+      netmask: 255.255.255.0
+
+vip_site: 192.168.1.88
+vip_site: 192.168.88.88
+
+storage_interface: "storage"
+
+crush_hierarchy:
+  - name: default
+    type: root
+    children:
+      - name: AZ-A
+        type: zone
+        children:
+          - name: block01
+            type: host
+          - name: block02
+            type: host
+      - name: AZ-B
+        type: zone
+        children:
+          - name: block03
+            type: host
+          - name: block04
+            type: host
+      - name: AZ-C
+        type: zone
+        children:
+          - name: block05
+            type: host
+          - name: block06
+            type: host
+
+rules:
+  - name: host-a
+    type: replicated
+    seperation: host
+    root: AZ-A
+
+  - name: host-b
+    type: replicated
+    seperation: host
+    root: AZ-B
+
+  - name: host-c
+    type: replicated 
+    seperation: host
+    root: AZ-C
+  
+  - name: mgr_metrics_pool
+    type: replicated
+    seperation: zone
+    root: default
+
+pools:
+  - name: a
+    pgs: 1024
+    application: "rbd"
+    autoscale_mode: "warn"
+    mode: replicated
+    replicate: 2
+    rule_name: host-a
+
+  - name: b
+    pgs: 1024
+    application: "rbd"
+    autoscale_mode: "warn"
+    mode: replicated
+    replicate: 2
+    rule_name: host-b
+
+  - name: c
+    pgs: 1024
+    application: "rbd"
+    autoscale_mode: "warn"
+    mode: replicated
+    replicate: 2
+    rule_name: host-c
+   
+  - name: device_health_metrics
+    rule_name: mgr_metrics_pool
+
+
+teams:
+  - name: "storage"
+    team_name: "storage"
+    type: "lacp"
+    subnet: "192.168.4"
+    ip4: "{{ ansible_host }}"
+    prefix: 24
+    gw4: "192.168.4.254"
+    mtu: 9000
+    ifs:
+      - "ens5f0"
+      - "ens7f0"
+    runner: "lacp"
+    never_default: "no"
+
+  - name: "sync"
+    team_name: "sync"
+    type: "lacp"
+    raw_subnet: "192.168.5"
+    subnet: "192.168.5"
+    prefix: 24
+    gw4: "192.168.5.254"
+    mtu: 9000
+    ifs:
+      - "ens5f1"
+      - "ens7f1"
+    runner: "lacp"
+
+
+repofiles:
+  - name: "rhel-8"
+    repo_sections:
+      - name: "rhel-8-for-x86_64-appstream-rpms"
+        url: "https://yum.example.com/rhel8.4/rhel-8-for-x86_64-appstream-rpms/"
+      - name: "rhel-8-for-x86_64-baseos-rpms"
+        url: "https://yum.example.com/rhel8.4/rhel-8-for-x86_64-baseos-rpms/"
+  - name: "ceph-5"
+    repo_sections:
+      - name: "rhceph-5-tools-for-rhel-8-x86_64-rpms"
+        url: "https://yum.example.com/rhceph5:16.2.0-152/rhceph-5-tools-for-rhel-8-x86_64-rpms/"
+
+cluster_ips: #needs_to_be_changed
+  
+cimc_or_ilo: ilo
+ilo_version: 5
+public_id_key:
+        ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDDPhptOhY6TlRGKwsPUJyKH7hTGV3KgtZbJ5LUKG4+3eMjm06N+FN67gpKutN+mLDN0/3n9IP6QkPQP+oMOhHiyjp5S44tndxqLNFpje7c2P0C73eWf+hN01grjtPMNOOznRsQJoLJg/v21y8AtOTTbD0bAUOhckPxcOSZpSi+zsESseIQhFsxk3gYureSTw7n4kxDJmYbJy1xVyxUKohPHflebc/qzJPwEA+/AW05VLXZ/HMXl8iVYbuNQYYO+bR9wrE0wRhcxYSbB+uPqXz4nyqeaer/inNzM9R+1t6GqIgHbWz6DUfOHQd+9cCaA9vDz2wuKlGJ6mAJe2eMeR14i4ct+NwGIdRNdP12Y/Hi2P7E6YIfHzO0IwoeYlQioTi+UYcE2cYyyqI+y/HhHbORFXvm7WN+b+jyh8HVXJ69H5DpsoecqX8YX+YQL1HoM93WfWyhCBP/+b52kPVlajE/XsX+28rDMv/ZD7bE1Q8JmcZL28HYqmDWEj6mQbijN9M= cloud-user@pre-vrr0bst-01

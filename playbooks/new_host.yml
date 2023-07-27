@@ -1,0 +1,10 @@
+---
+
+- hosts: 
+  become: yes
+  roles:
+  - { role: new-host, ipa_client_action: "register"}
+  vars:
+    hostgroups:
+    - hosts_storage
+

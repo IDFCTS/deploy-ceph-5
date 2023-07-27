@@ -1,0 +1,53 @@
+---
+- block:
+  - name: "Fail if IP4 is Auto Completed And Netmask Isn't a Multy of 8"
+    fail:
+    when: team.prefix %8 != 0
+
+  - name: "Extract Ansible Host Octats"
+    set_fact:
+      octs: "{{ hostvars[inventory_hostname]['ansible_facts']['default_ipv4']['address'].split('.') }}"
+
+  - name: "Reset Final Octets"
+    set_fact:
+      final_octs: ''
+
+  - name: "Create Final Octets"
+    set_fact:
+      final_octs: "{{ final_octs + '.' + octs[oct_num]}}"
+    with_items: "{{ range(((team.prefix / 8) | int), 4) | list }}"
+    loop_control:
+      loop_var: oct_num
+
+  - name: "Set Automaticlly Assigned IP"
+    set_fact:
+      ip4: "{{ team.raw_subnet + final_octs + '/' + (team.prefix | string) }}"
+  when: team.ip4 is undefined
+
+- name: "Set IP Address Variable"
+  set_fact:
+    ip4: "{{ team.ip4 + '/' + (team.prefix | string) }}"
+  when: team.ip4 is defined
+
+- name: "Check if Team Exists"
+  shell:
+    cmd: nmcli con show "{{ team.name }}"
+  register: team_exists
+  failed_when: (team_exists.rc | int) not in [0, 10]
+
+- name: "Create Team"
+  shell:
+    cmd: nmcli con add type team ifname {{ team.name }} con-name {{ team.name }} ipv4.method {{ team.method | default('manual') }} ipv4.addresses {{ ip4 }} ipv4.gateway {{ team.gw4 }} team.runner {{ team.runner | default('lacp') }} mtu {{ team.mtu }} ipv4.never-default {{ team.never_default | default('yes') }} {{ 'ipv4.route-metric' + ' ' + (team.route_metric | string) if team.route_metric is defined else '' }}
+  when: (team_exists.rc | int) == 10
+
+- name: "Modify Team"
+  shell:
+    cmd: nmcli con modify {{ team.name }} ipv4.method {{ team.method | default('manual') }} ipv4.addresses {{ ip4 }} ipv4.gateway {{ team.gw4 }} team.runner {{ team.runner | default('lacp') }} mtu {{ team.mtu }} ipv4.never-default {{ team.never_default | default('yes') }} {{ 'ipv4.route-metric' + ' ' + (team.route_metric | string) if team.route_metric is defined else '' }}
+  notify: "Restart Networking"
+  when: (team_exists.rc | int) == 0
+
+- name: "Configure Team Slaves"
+  include_tasks: configure-team-slave.yml
+  with_items: "{{ team.ifs }}"
+  loop_control:
+    loop_var: interface

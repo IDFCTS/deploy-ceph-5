@@ -1,0 +1,68 @@
+---
+
+- set_fact:
+    cimc_pass: "{{ mr_cimc_pass }}"
+  when: site == 'site'
+
+- set_fact:
+    cimc_pass: "{{ mm_cimc_pass }}"
+  when: site == 'site'
+
+- name: create advanced interface for {{ inventory_hostname }}
+  delegate_to: localhost
+  imc_rest:
+    hostname: "i{{ inventory_hostname }}.example.com"
+    username: "{{ cimc_user }}"
+    password: "{{ cimc_pass }}"
+    validate_certs: no
+    content: |
+      <configConfMo dn='sys/rack-unit-1/boot-precision' inHierarchical='true'>
+        <inConfig>
+          <lsbootDevPrecision dn='sys/rack-unit-1/boot-precision' status='modified'>
+            <lsbootPxe name='pxe_slotL_port0' slot='L' port='0' state='Enabled' dn='sys/rack-unit-1/boot-precision/pxe-pxe_slotL_port0' rn='pxe-pxe_slotL_port0'/>
+          </lsbootDevPrecision>
+        </inConfig>
+      </configConfMo>
+
+- name: change the boot order of {{ inventory_hostname }}
+  delegate_to: localhost
+  imc_rest:
+    hostname: "i{{ inventory_hostname }}.example.com"
+    username: "{{ cimc_user }}"
+    password: "{{ cimc_pass }}"
+    validate_certs: no
+    content: |
+      <configConfMo>
+        <inConfig>
+          <lsbootStorage dn='sys/rack-unit-1/boot-policy/storage-read-write' access='read-write' order='1' type='storage'/>
+        </inConfig>
+      </configConfMo>
+
+- name: set the pxe to be one time
+  delegate_to: localhost
+  imc_rest:
+    hostname: "i{{ inventory_hostname }}.example.com"
+    username: "{{ cimc_user }}"
+    password: "{{ cimc_pass }}"
+    validate_certs: no
+    content: |
+      <configConfMo dn='sys/rack-unit-1/one-time-precision-boot' inHierarchical='false'>
+        <inConfig>
+                <oneTimePrecisionBootDevice device='pxe_slotL_port0'/>
+        </inConfig>
+      </configConfMo>
+
+- name: reboot the compute
+  delegate_to: localhost
+  imc_rest:
+    hostname: "i{{ inventory_hostname }}.example.com"
+    username: "{{ cimc_user }}"
+    password: "{{ cimc_pass }}"
+    validate_certs: no
+    content: |
+      <configConfMo  dn='sys/rack-unit-1' inHierarchical='false'>
+        <inConfig>
+                <computeRackUnit adminPower='cycle-immediate'/>
+        </inConfig>
+      </configConfMo>
+...

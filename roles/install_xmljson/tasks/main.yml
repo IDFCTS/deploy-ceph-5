@@ -1,0 +1,25 @@
+---
+
+- name: copy xmljson tar
+  copy:
+    src: xmljson-0.2.1.tar.gz
+    dest: /tmp/
+  become: true
+
+- name: untar the xmljson tar
+  unarchive:
+    src: /tmp/xmljson-0.2.1.tar.gz
+    dest: /tmp/
+  become: true
+
+- name: install the xmljson module
+  shell: "python setup.py install"
+  args:
+    chdir: /tmp/xmljson-0.2.1/
+  become: true
+
+- name: remove the xmljson tar
+  file:
+    path: /tmp/xmljson-0.2.1.tar.gz
+    state: absent
+  become: true

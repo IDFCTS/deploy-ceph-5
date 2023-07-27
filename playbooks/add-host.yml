@@ -1,0 +1,13 @@
+---
+- hosts: ceph-servers
+  roles:
+    - distribute-cephadm-ssh-key
+    - distribute-ceph-admin-key
+  become: true
+
+- hosts: bootstraps
+  roles:
+    - edit-ceph-component
+  become: true
+  vars:
+    mode: "add"

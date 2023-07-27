@@ -1,0 +1,50 @@
+---
+service_type: host
+addr: {% if 'mgmt-servers' in group_names %}{{ hostvars[inventory_hostname]['ansible_facts']['default_ipv4']['address'] }}{% else %}{{ hostvars[inventory_hostname]['ansible_' + storage_interface]['ipv4']['address'] }}{% endif %}  
+hostname: {{ inventory_hostname }}
+labels:
+{% if admin_group in hostvars[inventory_hostname].group_names %}
+- _admin
+{% endif %}
+{% if mon_group in hostvars[inventory_hostname].group_names %}
+- mon
+{% endif %}
+{% if mgr_group in hostvars[inventory_hostname].group_names %}
+- mgr
+{% endif %}
+{% if osd_group in hostvars[inventory_hostname].group_names %}
+- osd
+{% endif %}
+---
+service_type: mon
+placement:
+  label: "mon"
+---
+service_type: mgr
+placement:
+  label: "mgr"
+---
+service_type: osd
+service_id: default_drive_group
+placement:
+  label: "osd"
+data_devices:
+  paths:
+{% for data_device in data_devices %}
+    - {{ data_device }}
+{% endfor %}
+{% if db_devices is defined %}
+db_devices:
+  paths:
+{% for db_device in db_devices %}
+    - {{ db_device }}
+{% endfor %}
+{% endif %}
+osds_per_device: 1
+{% if db_slots is defined %}
+db_slots: {{ db_slots }}
+{% endif %}
+{% if block_db_size is defined %}
+block_db_size: {{ db_size }}
+{% endif %}
+

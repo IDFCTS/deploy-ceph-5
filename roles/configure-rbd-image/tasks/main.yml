@@ -1,0 +1,87 @@
+---
+- name: Test mount_points lv configurations
+  fail:
+    msg: "{{ item.path }} is missing some variables"
+  when: (item.lv_name is defined and item.vg_name is not defined) or
+        (item.lv_name is not defined and item.vg_name is defined)
+  loop: "{{ mount_points }}"
+
+- name: Copy ceph repo
+  template:
+    src: "rhcs{{ ceph_version }}.repo.j2"
+    dest: "/etc/yum.repos.d/rhcs{{ ceph_version }}.repo"
+
+- name: Install ceph packages
+  yum: 
+    name: 
+      - ceph-common
+      - ceph-mon
+      - ceph-osd
+
+- name: Fetch ceph conf
+  fetch:
+    src: /etc/ceph/ceph.conf
+    dest: /tmp/ceph.conf
+    flat: yes
+  delegate_to: "{{ mon_hostname }}"
+  run_once: true
+
+- name: copy ceph conf to remote
+  copy: 
+    src: /tmp/ceph.conf
+    dest: /etc/ceph/ceph.conf
+
+- name: Fetch keyring
+  shell:
+    cmd: ceph auth get-or-create client.{{ user_name }} mon 'profile rbd' osd 'profile rbd pool={{ pool_name }}' 
+  register: keyring
+  delegate_to: "{{ mon_hostname }}"
+  run_once: true
+
+- name: copy keyring to remote
+  copy:
+    content: "{{ keyring.stdout }}\n"
+    dest: /etc/ceph/ceph.client.{{ user_name }}.keyring
+
+- name: create rbd image
+  shell: 
+    cmd: "rbd create --id={{ user_name }} {{ pool_name }}/{{ item.name }} --size={{ item.size }}"
+  loop: "{{ image_list }}"
+  register: error_code
+  failed_when: "error_code.rc != 0 and error_code.rc != 17"
+
+- name: Take disable list - ceph 3
+  set_fact:
+    disable_list: "ceph_{{ ceph_version }}_disable"
+  when: ceph_version == 3
+
+- name: Take disable list - ceph 4
+  set_fact:
+    disable_list: "ceph_{{ ceph_version }}_disable"
+  when: ceph_version == 4
+
+- name: disable problematic features
+  shell:
+    cmd: "rbd feature --id={{ user_name }} disable {{ pool_name }}/{{ item.name }} {{ ceph_disable[disable_list] }}"
+  loop: "{{ image_list }}"
+  ignore_errors: yes
+
+- name: map rbd image if available
+  include: map_rbd.yml
+  loop: "{{ image_list }}"
+
+- name: configure according to mount type
+  include: lv_or_not.yml
+  loop: "{{ mount_points }}"
+
+- name: add rbd to rdbmap 
+  lineinfile:
+    path: '/etc/ceph/rbdmap'
+    line: "{{ pool_name }}/{{ item.name }}  id={{ user_name }},keyring=/etc/ceph/ceph.client.{{ user_name }}.keyring"
+  loop: "{{ image_list }}"
+  
+- name: enable rbdmap
+  service:
+    name: rbdmap
+    state: restarted
+    enabled: yes

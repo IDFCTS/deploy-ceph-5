@@ -1,0 +1,25 @@
+---
+- name: Copy Users Usage Script
+  copy:
+    src: users_usage.sh
+    dest: "{{ custom_metrics_scripts_path }}/users_usage.sh"
+    mode: 0744
+
+- name: Copy Users Quotas Script
+  copy:
+    src: users_quotas.sh
+    dest: "{{ custom_metrics_scripts_path }}/users_quotas.sh"
+    mode: 0744
+
+- name: Set Cron For Usage Script
+  cron:
+    name: "Monitor Users Object Usage"
+    minute: "{{ usage_cron_minute }}"
+    job: "{{ custom_metrics_scripts_path }}/users_usage.sh > /dev/null 2>&1"
+
+- name: Set Cron For Quotas Script
+  cron:
+    name: "Monitor Users Quotas"
+    minute: "{{ quota_cron_minute }}"
+    job: "{{ custom_metrics_scripts_path }}/users_quotas.sh > /dev/null 2>&1"
+

@@ -1,0 +1,12 @@
+prometheus_job_name: "object"
+
+var_log_vg: rootvg
+var_log_lv: var_loglv
+
+job: "object"
+sources:
+  - file: /var/log/nginx/*.log
+
+firewall_ports:
+  - "{{ cache_port }}/tcp"
+  - "9090/tcp"

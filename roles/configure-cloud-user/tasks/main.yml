@@ -1,0 +1,58 @@
+---
+- name: "Set Node Hostname"
+  hostname:
+    name: "{{ inventory_hostname }}"
+
+- name: "Create Cloud User Group"
+  group:
+    name: cloud-user
+
+- name: "Create Cloud User"
+  user:
+    name: cloud-user
+    groups: cloud-user,wheel
+
+- name: "Allow Wheel Group Passwordless Sudo"
+  lineinfile:
+    dest: /etc/sudoers
+    state: present
+    regexp: '^%wheel'
+    line: '%wheel ALL=(ALL) NOPASSWD: ALL'
+    validate: visudo -cf %s 
+
+- name: "Create .SSH Folder"
+  file:
+    path: /home/cloud-user/.ssh/
+    owner: cloud-user
+    group: cloud-user
+    state: directory
+    recurse: yes
+
+- name: "Create Authorized Keys File"
+  file:
+    path: /home/cloud-user/.ssh/authorized_keys
+    owner: cloud-user
+    group: cloud-user
+    state: touch 
+    mode: 0644
+
+- name: "Add public and private key"
+  block:
+    - name: "Add Public Key"
+      lineinfile:
+        line: "{{ public_id_key }}"
+        path: /home/cloud-user/.ssh/authorized_keys
+        state: present
+
+    - name: "Edit Bastion id_rsa"
+      shell:
+        cmd: echo "{{ private_id_key }}" > /home/cloud-user/.ssh/id_rsa 
+      delegate_to: localhost
+      run_once: true
+
+    - name: "Change root password"
+      user:
+        state: present
+        name: root
+        password: 
+        update_password: always

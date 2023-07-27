@@ -1,0 +1,21 @@
+---
+
+- name: include vault vars
+  include_vars: vault.yml
+
+- name: "Pxe on hp ilo4"
+  include: ilo4_pxe_boot.yml
+  when: 
+    - cimc_or_ilo == "ilo" and ilo_version == 4
+  delegate_to: localhost
+
+- name: "Pxe on hp ilo5"
+  include: ilo5_pxe_boot.yml
+  when: 
+    - cimc_or_ilo == "ilo" and ilo_version == 5
+  delegate_to: localhost
+
+- name: "Pxe on cisco"
+  include: cimc_pxe_boot.yml
+  when: cimc_or_ilo  == "cimc"
+  delegate_to: localhost

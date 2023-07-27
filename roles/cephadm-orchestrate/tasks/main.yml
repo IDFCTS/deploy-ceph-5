@@ -1,0 +1,14 @@
+---
+- name: "Populate the Orchestration File"
+  copy:
+    dest: /tmp/ceph-orch.yml
+    content: "{{ lookup('template', 'cluster-description.yml.j2') }}"
+    force: true
+
+- name: "Orchestrate the Cluster"
+  shell:
+    cmd: cephadm shell --mount /tmp/ceph-orch.yml -- ceph orch apply -i /mnt/ceph-orch.yml
+
+- name: "Set ceph osd memory target"
+  shell:
+    cmd: ceph config set osd osd_memory_target {{ osd_memory_target }}

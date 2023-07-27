@@ -1,0 +1,4 @@
+ceph_version: 4
+ceph_disable:
+  ceph_4_disable: "deep-flatten"
+  ceph_3_disable: "object-map fast-diff deep-flatten"

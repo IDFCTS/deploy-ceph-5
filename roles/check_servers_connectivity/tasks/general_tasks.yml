@@ -1,0 +1,40 @@
+---
+
+- name: "Copy {{ item.team_name }} check script"
+  template:
+    src: general_check.j2
+    dest: /opt/check_connectivity/{{ item.team_name }}_check
+    owner: root
+    group: root
+    mode: 0744
+
+- name: run the script
+  shell: '/opt/check_connectivity/{{ item.team_name }}_check'
+  ignore_errors: yes
+
+- name: check if there was a failed ping
+  stat:
+    path: /opt/check_connectivity/result
+  register: st
+
+- fail:
+    msg: 'There was a failed ping in {{ item.team_name }} ping test.'
+  when: st.stat.size != 0
+
+- name: check if there is a problematic team
+  stat:
+    path: /opt/check_connectivity/team_result
+  register: st_team
+
+- shell: "cat /opt/check_connectivity/team_result"
+  register: team_problems
+  when: st_team.stat.size != 0
+
+- debug:
+    msg: "{{ team_problems.stdout }}"
+  when: st_team.stat.size != 0
+
+- fail:
+    msg: 'There was a problem in the team configuration.'
+  when: st_team.stat.size != 0
+...

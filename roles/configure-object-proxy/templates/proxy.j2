@@ -1,0 +1,87 @@
+#---------------------------------------------------------------------
+# Global settings
+#---------------------------------------------------------------------
+global
+    log         {{ ansible_hostname }} local2
+
+    chroot      /var/lib/haproxy
+    pidfile     /var/run/haproxy.pid
+    maxconn     10000
+    user        haproxy
+    group       haproxy
+    daemon
+
+    nbproc {{ dedicated_cpu_num }}
+    cpu-map 1-{{ dedicated_cpu_num }} 0-{{ dedicated_cpu_num - 1}}
+
+
+    # turn on stats unix socket
+    stats socket /var/lib/haproxy/stats user haproxy group haproxy mode 660 level admin
+    stats timeout 30s
+
+#---------------------------------------------------------------------
+# common defaults that all the 'listen' and 'backend' sections will
+# use if not designated in their block
+#---------------------------------------------------------------------
+defaults
+    mode                    http
+    log                     global
+    option                  httplog
+    option                  dontlognull
+    option http-server-close
+    option forwardfor       except 127.0.0.0/8
+    option                  redispatch
+    option httpchk GET /swift/healthcheck
+    retries                 3
+    timeout http-request    10s
+    timeout queue           1m
+    timeout connect         10s
+    timeout client          1m
+    timeout server          1m
+    timeout http-keep-alive 10s
+    timeout check           10s
+    maxconn                 10000
+    balance static-rr
+
+#---------------------------------------------------------------------
+# main frontend which proxys to the backends
+#---------------------------------------------------------------------
+
+frontend https-in  
+{% for front in binds %}
+    bind :{{ front.port }}{% if front.interface is defined %} interface {{ front.interface }}{% endif %} {% if front.use_https %}ssl crt {{ certificates_path + front.cert_name }}{% endif %}  
+{% endfor %}
+
+    capture request header Authorization len 1024
+    # set default priority class for all requests
+    http-request set-priority-class int(1000)
+
+{% if special_clients is defined %}
+##### Tiers #####
+{% for client in special_clients %}
+    acl is_{{ client.name }} req.hdr(Authorization),field(2,'='),field(1,'/') -m str {{ client.access_key }}
+    http-request set-priority-class int({{ client.priority_class }}) if is_{{ client.name }}  
+    acl is_{{ client.name }} req.hdr(Authorization),field(1,':'),field(2,' ') -m str {{ client.access_key }}
+    http-request set-priority-class int({{ client.priority_class }}) if is_{{ client.name }}
+{% endfor %}
+{% endif %}
+
+{% if cache_clients is defined %}
+##### Cache #####
+{% for client in cache_clients %}
+    acl is_{{ client.name }} req.hdr(Authorization),field(2,'='),field(1,'/') -m str {{ client.access_key }}
+    use_backend {{ cache_backend }} if is_{{ client.name }}
+    acl is_{{ client.name }} req.hdr(Authorization),field(1,':'),field(2,' ') -m str {{ client.access_key }}
+    use_backend {{ cache_backend }} if is_{{ client.name }}
+{% endfor %}
+{% endif %}
+
+    default_backend regular
+
+{% for backend in backends %}
+backend {{ backend.name }}
+{% for server in backend.servers %}
+    server {{ server.name }} {{ server.address }}:{{ server.port }} check
+{% endfor %}
+
+{% endfor %}

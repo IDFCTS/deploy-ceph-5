@@ -1,0 +1,11 @@
+[Unit]
+Description= Create /var/log/dmesg on boot
+ConditionPathExists=/var/log/dmesg
+
+[Service]
+ExecStart=/usr/bin/dmesg
+StandardOutput=file:/var/log/dmesg
+
+[Install]
+WantedBy=multi-user.target
+

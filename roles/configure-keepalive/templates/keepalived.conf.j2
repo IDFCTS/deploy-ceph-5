@@ -1,0 +1,39 @@
+vrrp_script check_script {
+  script /usr/libexec/keepalived/check_alive.sh
+  interval 2
+  fall 2
+  rise 10
+}  
+{% for vip in vips %}
+{% set interface_ansible = "ansible_" + vip.interface %}
+vrrp_instance {{ vip.name }} {
+    state BACKUP
+    nopreempt
+    interface {{ vip.interface }}
+    virtual_router_id {{ vip.virtual_router_id }} #should be unique for each keepalived on the same network
+    advert_int 1
+    priority 1
+    authentication {
+        auth_type PASS
+        auth_pass {{ vip.auth_pass }}
+    }
+    unicast_src_ip {{ hostvars[ansible_nodename.split('.')[0]][interface_ansible]['ipv4']['address'] }}
+    unicast_peer {
+{% for host in groups[vip.proxies_group] %}
+{% if host!= ansible_nodename.split('.')[0] %}
+        {{ hostvars[host][interface_ansible]['ipv4']['address'] }} # sends VRRP adverts to the following address
+{% endif %}
+{% endfor %}
+    }
+    virtual_ipaddress {
+        {{ vip.address }} #virtual ip address
+    }
+    track_script {
+        check_script
+    }
+    track_interface {
+        {{ vip.interface }}
+    }
+}  
+
+{% endfor %}

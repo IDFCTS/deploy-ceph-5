@@ -1,0 +1,86 @@
+---
+- name: Install lldpad
+  package:
+    name: lldpad
+    state: present
+
+- name: Start lldpad service for lldptool commands
+  service:
+    name: lldpad
+    state: started
+    enabled: yes
+
+- name: Initialize an empty list for active interfaces
+  set_fact:
+    active_interfaces: []
+
+- name: Get list of active interfaces ansible <= 2.7.5
+  set_fact:
+    active_interfaces: "{{ active_interfaces }} + [ '{{ item }}' ]"
+  when:
+    - ansible_version.major == 2 and ansible_version.minor <= 7
+    - item is search("enp") or item is search("ens") or item == ("eno1") or item == ("eno2")
+    - hostvars[inventory_hostname]['ansible_' + item]['type'] == 'ether'
+    - hostvars[inventory_hostname]['ansible_' + item]['active']|bool
+    - lldpad_active_interfaces|bool
+  with_items:
+    - "{{ ansible_interfaces | map('replace', '-', '_') | list }}"
+
+- name: Get list of active interfaces ansible > 2.7.5
+  set_fact:
+    active_interfaces: "{{ active_interfaces }} + [ '{{ item }}' ]"
+  when:
+    - ansible_version.major > 2 or (ansible_version.major == 2 and ansible_version.minor > 7)
+    - item is search("enp") or item is search("ens") or item == ("eno1") or item == ("eno2")
+    - ansible_facts[item]['type'] == 'ether'
+    - ansible_facts[item]['active']|bool
+    - lldpad_active_interfaces|bool
+  with_items:
+    - "{{ ansible_facts['interfaces'] | map('replace', '-', '_') | list }}"
+
+- name: Use explicit list of interfaces
+  set_fact:
+    active_interfaces: "{{ lldpad_selected_interfaces }}"
+  when:
+    - not lldpad_active_interfaces|bool
+    - lldpad_selected_interfaces|length > 0
+
+- name: Get LLDP adminstatus for all active interfaces
+  command: "/usr/sbin/lldptool get-lldp -i {{ item }} adminStatus"
+  changed_when: False
+  with_items: "{{ active_interfaces }}"
+  register: lldp_adminStatus
+
+- name: Enable LLDP adminstatus for all active interfaces
+  command: "/usr/sbin/lldptool set-lldp -i {{ item.item }} adminStatus=rxtx"
+  with_items: "{{ lldp_adminStatus.results }}"
+  when: item.stdout != "adminStatus=rxtx"
+  notify:
+    - restart lldpad
+
+- name: Get LLDP sysName tlv for all active interfaces
+  command: "/usr/sbin/lldptool get-tlv -i {{ item }} -V sysName -c enableTx"
+  changed_when: False
+  with_items: "{{ active_interfaces }}"
+  register: lldp_sysName
+
+- name: Enable LLDP sysName tlv for all active interfaces
+  command: "/usr/sbin/lldptool set-tlv -i {{ item.item }} -V sysName enableTx=yes"
+  with_items: "{{ lldp_sysName.results }}"
+  when: item.stdout != "enableTx=yes"
+  notify:
+    - restart lldpad
+
+- name: Get LLDP portDesc tlv for all active interfaces
+  command: "/usr/sbin/lldptool get-tlv -i {{ item }} -V portDesc -c enableTx"
+  changed_when: False
+  with_items: "{{ active_interfaces }}"
+  register: lldp_portDesc
+
+- name: Enable LLDP portDesc tlv for all active interfaces
+  command: "/usr/sbin/lldptool set-tlv -i {{ item.item }} -V portDesc enableTx=yes"
+  with_items: "{{ lldp_portDesc.results }}"
+  when: item.stdout != "enableTx=yes"
+  notify:
+    - restart lldpad
+...

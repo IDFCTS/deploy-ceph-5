@@ -1,0 +1,5 @@
+---
+- hosts: bootstraps
+  roles: 
+    - configure-crush
+  become: true

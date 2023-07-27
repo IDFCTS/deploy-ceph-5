@@ -1,0 +1,5 @@
+- hosts: ceph-servers
+  become: yes
+  roles:
+    - check_servers_connectivity
+

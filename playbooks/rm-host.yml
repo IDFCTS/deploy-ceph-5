@@ -1,0 +1,6 @@
+- hosts: bootstraps
+  roles:
+    - edit-ceph-component
+  become: true
+  vars:
+    mode: "rm"

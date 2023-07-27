@@ -1,0 +1,32 @@
+---
+- name: create crush rules
+  shell:
+    cmd: ceph osd crush rule create-{{ item.type }} {{ item.name }} {{ item.root }} {{ item.seperation }}
+  with_items: "{{ rules }}"
+  ignore_errors: true
+
+
+- name: edit existing crush rules
+  block:
+    - shell:
+        cmd: ceph osd getcrushmap -o /tmp/crush.bin
+    - shell:
+        cmd: crushtool -d /tmp/crush.bin -o /tmp/crush.txt
+    - replace:
+        path: /tmp/crush.txt
+        after: 'rule {{ item.name }} {'
+        regexp: '^(.+step take.+)$'
+        replace: '\tstep take {{ item.root }}'
+      with_items: "{{ rules }}"
+    - replace:
+        path: /tmp/crush.txt
+        after: 'rule {{ item.name }} {'
+        regexp: '^(.+step chooseleaf firstn 0 type.+)$'
+        replace: '\tstep chooseleaf firstn 0 type {{ item.seperation }}'
+      with_items: "{{ rules }}"
+    - shell:
+        cmd: crushtool -c /tmp/crush.txt -o /tmp/crush.bin
+    - shell:
+        cmd: ceph osd setcrushmap -i /tmp/crush.bin
+  when: rules is defined
+  ignore_errors: true

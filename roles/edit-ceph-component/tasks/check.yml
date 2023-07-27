@@ -1,0 +1,11 @@
+---
+- shell:
+    cmd: ceph node ls | grep {{ item }}
+  register: is_exists
+  ignore_errors: yes
+  changed_when: no
+
+- name: add the hosts
+  shell:
+    cmd: ceph orch host {{ mode }} {{ item }} {{ hostvars[item]['ansible_' + storage_interface]['ipv4']['address'] }}
+  when: is_exists.rc != 0

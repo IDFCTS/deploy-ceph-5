@@ -1,0 +1,32 @@
+---
+- block:
+
+  - name: "Create the realm"
+    shell:
+      cmd: radosgw-admin realm create --rgw-realm={{ rgw_realm }} --default
+  
+  - name: "Create the zonegroup"
+    shell:
+      cmd: radosgw-admin zonegroup create --rgw-zonegroup={{ rgw_zonegroup }} --rgw-realm={{ rgw_realm }} --default --master
+  
+  - name: "Create the zone"
+    shell:
+      cmd: radosgw-admin zone create --rgw-zonegroup={{ rgw_zonegroup }} --rgw-zone={{ rgw_zone }} --default --master
+    register: failed
+
+  - name: "Commit the changes"
+    shell:
+      cmd: radosgw-admin period update --rgw-realm={{ rgw_realm }} --commit
+    when: failed.rc == 0 
+  ignore_errors: true
+
+- name: "Populate the Orchestration File"
+  copy:
+    dest: /tmp/radosgw-orch.yml
+    content: "{{ lookup('template', 'orch-radosgw.j2') }}"
+    force: true
+
+- name: "Orchestrate the radosgw"
+  shell:
+    cmd: cephadm shell --mount /tmp/radosgw-orch.yml -- ceph orch apply -i /mnt/radosgw-orch.yml
+

@@ -1,0 +1,12 @@
+---
+- name: 'copy required script to machine'
+  copy:
+    src: '{{ item.src }}'
+    dest: '{{ item.dest }}'
+    owner: root
+    group: root
+    mode: '0744'
+  with_items:
+  - {src: "failed-disks-lookup.sh",dest: "/var/lib/custom-metrics-scripts/" }
+
+...

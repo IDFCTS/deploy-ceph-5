@@ -1,0 +1,3 @@
+iif {{ lb_interface }} table 1
+from {{ hostvars[inventory_hostname]['ansible_' + lb_interface]['ipv4']['address'] }} table 1
+from {{ lb_vip_address }} table 1

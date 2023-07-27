@@ -1,0 +1,36 @@
+---
+# tasks file for ./
+
+- name: Copy the script to the directory 
+  copy: 
+    src: ssl-cert-check.sh
+    dest: /var/lib/custom-metrics-scripts/ssl-cert-check.sh
+    mode: 0755
+
+- name: Create empty string of certificates 
+  set_fact:
+    certificates: ""
+
+- name: Check if file the file exists
+  stat: 
+    path: "{{ certfile }}"
+  register: file_exists
+  loop: "{{ certificates_list }}" 
+  loop_control:
+    loop_var: certfile
+
+- name: Create combined string from list items
+  set_fact:
+    certificates: "{{ certificates + certfile.stat.path + ' ' }}"
+  when: certfile.stat.exists and certfile.stat.isreg
+  loop: "{{ file_exists.results }}" 
+  loop_control:
+    loop_var: certfile
+
+- name: Add cron for certificates alerting 
+  cron: 
+    name: certificate alerting script  
+    user: root
+    special_time: daily 
+    job: /var/lib/custom-metrics-scripts/ssl-cert-check.sh {{ certificates }}
+...

@@ -1,0 +1,22 @@
+{% set new_boot_order = [] %}
+{% set index_list = [] %}
+{% set mgmt_nic = 'NIC.LOM.1.1.IPv4' %}
+{% for item in boot_order %}
+{% if 'NIC' in item %}
+{{ index_list.append(boot_order.index( item )) }}
+{% endif %}
+{% endfor %}
+{% set first_nic = boot_order[index_list[0]] %}
+{% for item in boot_order %}
+{% if item == first_nic  %}
+{{ new_boot_order.append(mgmt_nic) }}
+{% elif item == mgmt_nic %}
+{{ new_boot_order.append(first_nic) }}
+{% else %}
+{{ new_boot_order.append(item) }}
+{% endif %}
+{% endfor %}
+new_boot_order:
+{% for item in new_boot_order %}
+  - {{ item }}
+{% endfor %}

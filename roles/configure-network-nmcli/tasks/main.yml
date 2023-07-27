@@ -1,0 +1,6 @@
+---
+- name: "Create Teams"
+  include_tasks: "configure-team.yml"
+  with_items: "{{ teams }}"
+  loop_control:
+    loop_var: team

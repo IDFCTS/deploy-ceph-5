@@ -1,0 +1,26 @@
+- hosts: all
+  gather_facts: False
+  connection: local
+  serial: 1
+  tags: 
+    - never
+    - data
+  roles:
+    - add-pxe-target
+
+- hosts: all
+  gather_facts: False
+  connection: local
+  serial: 1
+  tags: 
+    - never
+    - management
+  vars_prompt:
+    - name: username
+      prompt: "Enter your mgmt username"
+    - name: user_pass
+      prompt: "Enter your user password"
+  roles:
+    - install_xmljson
+    - pxe_boot
+

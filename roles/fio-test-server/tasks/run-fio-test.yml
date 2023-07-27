@@ -1,0 +1,8 @@
+---
+- name: "Set FIO Filename"
+  set_fact:
+    filename: "{{ item.pvs }}"
+
+- name: "Run FIO Role"
+  include_role:
+    name: fio-test

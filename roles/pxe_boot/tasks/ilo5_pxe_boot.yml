@@ -1,0 +1,18 @@
+- name: Set server to PXE-Boot
+  redfish_command:
+    category: Systems
+    command: SetOneTimeBoot
+    bootdevice: Pxe
+    baseuri: "i{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ user_pass }}"
+  ignore_errors: true
+
+- name: Reboot the server
+  redfish_command:
+    category: Systems
+    command: PowerReboot
+    baseuri: "i{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ user_pass }}"
+  ignore_errors: true

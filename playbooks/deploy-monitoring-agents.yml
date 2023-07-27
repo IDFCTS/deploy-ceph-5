@@ -1,0 +1,29 @@
+---
+- hosts: mgmt-servers
+  roles:
+    - deploy-loki-agents
+  become: true
+
+- hosts: all
+  roles:
+    - configure-node-exporter
+  become: true
+
+- hosts: ceph-servers
+  roles:
+    - search_failed_disks
+  become: true
+
+- hosts: proxies
+  roles: 
+    - certificates-monitoring
+
+- hosts: bootstraps
+  roles:
+    - deploy-additional-metrics
+  become: true
+
+- hosts: radosgw
+  roles:
+    - deploy-object-monitoring
+  become: true

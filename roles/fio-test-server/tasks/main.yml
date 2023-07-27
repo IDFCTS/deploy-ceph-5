@@ -1,0 +1,4 @@
+---
+- name: "Loop Over Server Disks"
+  include_tasks: run-fio-test.yml
+  with_items: "{{ lvm_vgs.data_vgs }}"

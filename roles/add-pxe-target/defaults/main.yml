@@ -1,0 +1,14 @@
+---
+# defaults file for roles/configure-pxe-target
+
+cobbler_pass: 
+
+defaults:  
+  state: present
+  cobbler_server: cobbler.example.com 
+  cobbler_profile: rhel-7.9-x86_64
+  name: "{{ inventory_hostname }}"
+  properties: 
+    hostname: "{{ inventory_hostname }}"
+    netboot_enabled: yes
+

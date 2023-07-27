@@ -1,0 +1,49 @@
+---
+
+- name: Make sure firewalld is installed
+  yum:
+    name: firewalld
+    state: present
+
+- name: Print List of Opened Ports
+  shell:
+    cmd: firewall-offline-cmd --list-ports
+  register: raw_open_ports
+
+- name: Create Array of Open Ports
+  set_fact:
+    open_ports: "{{ raw_open_ports.stdout.split(' ') }}"
+
+- name: Check firewalld status
+  systemd:
+    name: firewalld
+  register: firewalld_status
+
+- set_fact:
+    running: "yes"
+  when: firewalld_status.status.ActiveState == "active"
+
+- name: Disable Unconfigured Ports
+  firewalld:
+    port: "{{ item }}"
+    permanent: yes
+    state: disabled
+    immediate: "{{ running | default('no') }}"
+    offline: yes
+  when: item not in firewall_ports and item != "" 
+  with_items: "{{ open_ports }}"
+
+- name: Enable Configured Ports
+  firewalld:
+    port: "{{ item }}"
+    permanent: yes
+    state: enabled
+    immediate: "{{ running | default('no') }}"
+    offline: yes
+  with_items: "{{ firewall_ports }}"
+
+- name: Turn on firewalld
+  service:
+    name: firewalld
+    state: started
+    enabled: yes

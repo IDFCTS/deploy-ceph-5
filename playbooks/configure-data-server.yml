@@ -1,0 +1,50 @@
+---
+- hosts: ceph-servers
+  roles:
+    - configure-cloud-user
+  vars:
+    ansible_ssh_user: root
+    ansible_ssh_pass: "{{ after_pxe_root_password }}"
+  become: yes
+  ignore_unreachable: yes
+
+- hosts: ceph-servers
+  strategy: free
+  roles:
+    - configure-network-nmcli
+  become: true
+
+- hosts: ceph-servers
+  roles:
+    - configure-resolv
+    - configure-data-ca
+    - configure-time
+    - configure-custom-dnf    
+    - configure-lldpad
+    - configure-sysctl
+    - configure-dmesg
+    - check_servers_connectivity
+    - create-dns-record
+  become: true
+    
+- hosts: ceph-servers
+  gather_facts: no
+  roles:
+    - set-prompt
+  become: yes
+
+- hosts: ceph-servers
+  serial: 1
+  roles:
+    - dnf-update-all
+  become: true
+
+- hosts: ceph-servers
+  tasks:
+    - name: "Install Ceph Packages"
+      dnf:
+        name:
+          - podman
+          - cephadm
+          - ceph-common
+  become: true

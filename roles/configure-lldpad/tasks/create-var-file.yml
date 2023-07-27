@@ -1,0 +1,104 @@
+---
+#- name: Set switch name as a variable
+#  shell: "echo $(/usr/sbin/lldptool -t -n -i {{ item }} | egrep 'sm|sr') $(/usr/sbin/lldptool -t -n -i {{ item }} | grep Eth | awk '{ print $2 }') {{ item }} {{ inventory_hostname }}"
+#  with_items: "{{ active_interfaces }}"
+#  register: switch_name
+#
+#- name: Insert variables to a temporary file
+#  local_action:
+#      module: lineinfile
+#      path: ./temp1
+#      line: "{{ item.stdout }}"
+#      create: yes
+#  with_items: "{{ switch_name.results }}"
+#
+#- name: Manipulating text
+#  shell: >
+#    echo $( /usr/bin/egrep 'sm|sr' temp1 | awk -F ' '  '{ a[$1] = a[$1] FS $2 FS $3 FS $4 } END { for (i in a) print i a[i] }' | sed 's/\] \[/,/g' > temp2 && mv temp2 temp1 )
+#  delegate_to: 127.0.0.1
+#
+
+- name: Set switch name as a variable
+  shell: "echo $(/usr/sbin/lldptool -t -n -i {{ item }} | egrep 'sm|sr')"
+  with_items: "{{ active_interfaces }}"
+  register: switch_name
+
+- name: Set switch name as a variable
+  shell: "echo $(/usr/sbin/lldptool -t -n -i {{ item }} | grep Eth | awk '{ print $2 }')"
+  with_items: "{{ active_interfaces }}"
+  register: switch_int_name
+
+- name: Set switch name as a variable
+  shell: "$(/usr/sbin/lldptool -t -n -i {{ item }} | grep Eth | awk '{ print $2 }') {{ item }} {{ inventory_hostname }}"
+  with_items: "{{ active_interfaces }}"
+  register: server_in_name
+
+- name: Change syntax to YAML
+  shell: >
+    awk '{print "  - { switch_name: "$1", interfaces: "$2", nic: "$3", server: "$4" }}' temp1 > temp2"
+  delegate_to: 127.0.0.1
+
+- name: Verify there is not previous var file 
+  local_action:
+      module: file
+      path: /Ansiking/add-cmp-flow/roles/configure-switch-interfaces/host_vars/localhost.yml.tmp
+      state: absent
+
+- name: Create switches_list var file
+  local_action:
+      module: blockinfile
+      path: /Ansiking/add-cmp-flow/roles/configure-switch-interfaces/host_vars/localhost.yml.tmp
+      create: yes
+      insertbefore: BOF
+      block: |
+        ---
+        switches:
+
+- name: Set the content of a temp file as a variable
+  set_fact:
+    contents: "{{ lookup('file', './temp2') }}"
+  delegate_to: 127.0.0.1
+
+- name: Add the switches to the switches_list var file
+  local_action:
+      module: lineinfile
+      path: /Ansiking/add-cmp-flow/roles/configure-switch-interfaces/host_vars/localhost.yml.tmp
+      insertafter: "switches:"
+      line: "{{ contents }}"
+
+- name: Remove the temp files
+  local_action:
+      module: file
+      path: ./temp1
+      state: absent
+
+- name: Remove the temp files
+  local_action:
+      module: file
+      path: ./temp2
+      state: absent
+
+- name: Remove duplicate lines
+  shell: >
+    cat /Ansiking/add-cmp-flow/roles/configure-switch-interfaces/host_vars/localhost.yml.tmp | sort | uniq > /Ansiking/add-cmp-flow/roles/configure-switch-interfaces/host_vars/localhost.yml
+  delegate_to: 127.0.0.1
+
+- name: Remove the temp files
+  local_action:
+      module: file
+      path: /Ansiking/add-cmp-flow/roles/configure-switch-interfaces/host_vars/localhost.yml.tmp
+      state: absent
+
+- name: Add 3 dots at the end of the var file
+  local_action:
+      module: lineinfile
+      path: /Ansiking/add-cmp-flow/roles/configure-switch-interfaces/host_vars/localhost.yml
+      line: "..."
+
+- name: Remove irrelevant lines
+  local_action:
+      module: lineinfile
+      path: /Ansiking/add-cmp-flow/roles/configure-switch-interfaces/host_vars/localhost.yml
+      regexp: '^#'
+      state: absent
+...

@@ -1,0 +1,23 @@
+---
+
+- hosts: pre-obj
+  connection: local
+  gather_facts: False
+  vars_prompt:
+    - name: rhv_pass
+      prompt: "Enter RHV admin password"
+    - name: rhv_user
+      prompt: "Enter RHV user (s<ID>)"
+  pre_tasks:
+    - fail:
+        msg: "RHV admin password was not entered"
+      when: (rhv_pass is not defined) or (rhv_pass|length == 0)
+    - fail:
+        msg: "RHV user was not entered"
+      when: (rhv_user is not defined) or (rhv_user|length == 0)
+  vars:
+    rhv_user_domain: example.com
+  roles:
+  - rhv-ansible
+...
+

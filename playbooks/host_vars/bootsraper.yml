@@ -1,0 +1,8 @@
+---
+cluster_group: "blk"
+mon_group: "blk-mons"
+mgr_group: "blk-mgrs"
+osd_group: "blk-osds"
+
+cluster_network: "192.1684.0/24"
+public_network: "192.168.5.0/24"

@@ -1,0 +1,35 @@
+---
+
+- name: "Install keepalived package"
+  yum:
+    name:
+    - "keepalived"
+    - "psmisc"
+    state: latest
+
+- name: "Copy the new health check script"
+  template:
+    src: "check_alive.sh.j2"
+    dest: "/usr/libexec/keepalived/check_alive.sh"
+    owner: "root"
+    group: "root"
+    mode: "0700"
+
+- name: "Copy the keepalived configuration file"
+  template:
+    src: "{{ item }}.j2"
+    dest: "/etc/keepalived/{{ item }}"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+  loop:
+    - "keepalived.conf"
+  notify:
+    - "restart keepalived"
+
+- name: "Start keepalived service"
+  service:
+    name: keepalived
+    state: restarted
+    enabled: yes
+...

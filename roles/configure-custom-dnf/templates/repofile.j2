@@ -1,0 +1,6 @@
+[{{ repo_section.name }}]
+name={{ repo_section.name }} 
+baseurl={{ repo_section.url }}
+gpgcheck={{ repo_section.gpgcheck | default('0') }}
+enabled={{ repo_section.enabled | default('1') }}
+{{ 'gpgkey =' + ' ' + (repo_section.gpgkey | string) if repo_section.gpgcheck is defined and repo_section.gpgcheck == 1 else '' }}

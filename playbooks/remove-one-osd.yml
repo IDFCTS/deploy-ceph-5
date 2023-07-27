@@ -1,0 +1,12 @@
+---
+- name: Remove one osd
+  hosts: bootstraps
+  become: true
+  vars_prompt:
+    - name: osd_id
+      prompt: What is the osd id (only number)?
+      private: no
+  tasks:
+    - name: Set the osd to remove
+      shell:
+        cmd: ceph orch osd rm {{ osd_id }}

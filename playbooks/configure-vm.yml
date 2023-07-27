@@ -1,0 +1,38 @@
+---
+- hosts: ceph-servers
+  roles:
+    - configure-cloud-user
+  become: yes
+  ignore_unreachable: yes
+
+- hosts: ceph-servers
+  roles:
+    - configure-time
+    - configure-custom-dnf    
+    - configure-lldpad
+    - configure-sysctl
+    - configure-dmesg
+  become: true
+        
+- hosts: ceph-servers
+  gather_facts: no
+  roles:
+    - set-prompt
+  become: yes
+
+- hosts: ceph-servers
+  serial: 1
+  roles:
+    - dnf-update-all
+  become: true
+
+- hosts: ceph-servers
+  tasks:
+    - name: "Install Ceph Packages"
+      dnf:
+        name:
+          - podman
+          - cephadm
+          - ceph-common
+  become: true
+...

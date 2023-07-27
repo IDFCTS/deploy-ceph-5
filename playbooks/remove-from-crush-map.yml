@@ -1,0 +1,15 @@
+---
+- name: Remove osds from crush map
+  hosts: bootstraps
+  become: true
+  tasks:
+    - name: Fail if still has osd label
+      fail:
+        msg: "{{ item }} still in the osds group - make sure you deleted the osd label with the rm-host playbook"
+      when: osd_group in hostvars[item].group_names
+      with_items: "{{ groups[servers_group_name] }}"
+
+    - name: Remove the hosts from the crash map after finishing removing the osds
+      shell:
+        cmd: ceph osd crush rm {{ item.split('.')[0] }}
+      with_items: "{{ groups[servers_group_name] }}"

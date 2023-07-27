@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# delete following line:
+truncate -s 0 /opt/check_connectivity/result
+truncate -s 0 /opt/check_connectivity/team_result
+
+LOCAL_IP=$(cat /etc/sysconfig/network-scripts/ifcfg-{{ item.team_name }} | grep IPADDR | cut -d "=" -f 2)
+
+cat /opt/check_connectivity/ip_list | grep {{ item.subnet }} > /opt/check_connectivity/ip_list-{{ item.team_name }}
+
+IP_LIST=$(cat /opt/check_connectivity/ip_list-{{ item.team_name }})
+
+for ip in $IP_LIST
+do
+        # ping each address except my local address
+        if [ "$ip" != "$LOCAL_IP" ]
+        then
+                ping -I $LOCAL_IP -q -c 3 -W 1 -M do -s {{ item.mtu }} $ip | egrep "100*%|66*%" > /opt/check_connectivity/result_$ip &
+        fi
+
+done
+
+# Test the team state
+state=$(teamdctl {{ item.team_name }} state | grep {{ item.type }})
+if [ $? != 0 ]; then
+	echo "{{ item.team_name }} team is not configured {{ item.type }}" >> /opt/check_connectivity/team_result
+fi
+
+# Test the teams ID if they are configured to be lacp
+if [ "{{ item.type }}" == "lacp" ]; then
+	if [ $(teamdctl {{ item.team_name }} state | grep aggregator | cut -d ':' -f2 | cut -d ',' -f1 | head -n 1) != $(teamdctl {{ item.team_name }} state | grep aggregator | cut -d ':' -f2 | cut -d ',' -f1 | tail -n 1)]; then
+		echo "{{ item.team_name }} team is not configured with the correct IDs" >> /opt/check_connectivity/team_result
+	fi
+fi
+
+# wait for all proccesses to finish
+sleep 5
+
+# aggregate all results to one file
+for file in /opt/check_connectivity/result_*
+do
+        file_size=$(stat --printf="%s" $file)
+        if [ $file_size -ne 0 ]
+        then
+                echo $file >> /opt/check_connectivity/result
+        fi
+done
+
+# delete all mid result files
+rm -f /opt/check_connectivity/result_*

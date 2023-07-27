@@ -1,0 +1,13 @@
+---
+
+- name: Set switch name as a variable
+  shell: "echo $(/usr/sbin/lldptool -t -n -i {{ item }} | egrep 'sm|sr')"
+  register: switch_name
+
+- name: Set switch interface name as a variable
+  shell: "echo $(/usr/sbin/lldptool -t -n -i {{ item }} | grep Eth | awk '{ print $2 }')"
+  register: switch_int_name
+
+- name: "Combine switches dictionary"
+  set_fact:
+    switches: "{{ switches | combine({  item: { 'sw_int': switch_int_name.stdout, 'switch_name':switch_name.stdout, 'server_name': inventory_hostname }  }) }}"

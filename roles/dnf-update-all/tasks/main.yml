@@ -1,0 +1,10 @@
+---
+- name: "Update All Packages"
+  dnf:
+    name: '*'
+    state: latest
+  register: is_updated
+
+- name: "Reboot Server if Updated"
+  reboot:
+  when: is_updated.changed

@@ -1,0 +1,18 @@
+---
+- name: Copy Additional Metrics Script
+  copy:
+    src: additionals_metrics.sh
+    dest: "{{ custom_metrics_scripts_path }}/additionals_metrics.sh"
+    mode: 0744
+
+- name: Set Cron For Additional Metrics
+  cron:
+    name: "Scrape Additional Ceph Metrics"
+    minute: "{{ additional_cron_minute }}"
+    job: "{{ custom_metrics_scripts_path }}/additionals_metrics.sh > /dev/null 2>&1"
+
+- name: Set Cron For PG Dump
+  cron:
+    name: "PG Dump to a Log File"
+    minute: "{{ pgdump_minute }}"
+    job: "ceph pg dump > /var/log/ceph/pgdump.log"

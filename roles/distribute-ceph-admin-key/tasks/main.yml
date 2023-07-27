@@ -1,0 +1,66 @@
+---
+- name: "Fetch Admin Key From Bootstraper"
+  fetch:
+    src: /etc/ceph/ceph.client.admin.keyring
+    dest: /tmp/ceph.client.admin.keyring
+    flat: yes
+  delegate_to: "{{ bootstraper }}"
+  run_once: true
+
+- name: "Fetch Ceph Conf From Bootstraper"
+  fetch:
+    src: /etc/ceph/ceph.conf
+    dest: /tmp/ceph.conf
+    flat: yes
+  delegate_to: "{{ bootstraper }}"
+  run_once: true
+
+- block:
+  - name: "Create /etc/ceph Directory"
+    file:
+      path: /etc/ceph
+      owner: ceph
+      group: ceph
+      state: directory
+
+  - name: "Distribute Admin Keyring"
+    copy:
+      src: /tmp/ceph.client.admin.keyring
+      dest: /etc/ceph
+      owner: root
+      group: root
+      mode: '0600'
+  
+  - name: "Distribute Ceph Conf"
+    copy:
+      src: /tmp/ceph.conf
+      dest: /etc/ceph
+      owner: root
+      group: root
+      mode: '0600'
+  when: inventory_hostname in groups[admin_group] and inventory_hostname != bootstraper
+
+- block:
+  - name: "Delete Admin Key"
+    file:
+      path: /etc/ceph/ceph.client.admin.keyring
+      state: absent
+
+  - name: "Delete Ceph Conf"
+    file:
+      path: /etc/ceph/ceph.conf
+      state: absent
+  when: inventory_hostname not in groups[admin_group]
+
+- block:
+  - name: "Delete Local Copy of Key"
+    file:
+      path: /tmp/ceph.client.admin.keyring
+      state: absent
+
+  - name: "Delete Local Copy of Conf"
+    file:
+      path: /tmp/ceph.conf
+      state: absent
+  delegate_to: localhost
+  run_once: true

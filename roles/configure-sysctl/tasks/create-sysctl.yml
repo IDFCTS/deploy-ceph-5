@@ -1,0 +1,47 @@
+---
+- name: Print List of Sysctls in File
+  shell:
+    cmd: cat {{ sysctl_file.path }} | awk -F= '{ print $1 }' | tr '\n' ' ' | sed 's/.$//'
+  register: raw_sysctl_values
+
+- name: 
+  debug:
+    msg: "{{ raw_sysctl_values }}"
+
+- name: Create List of Current File Sysctls
+  set_fact:
+    current_sysctl_values: "{{ raw_sysctl_values.stdout.split(' ') }}"
+
+- name: Create List of Desired File Sysctls
+  set_fact:
+    target_sysctl_values: "{{ target_sysctl_values | default([]) + [sysctl.name] }}"
+  with_items: "{{ sysctl_file.sysctls }}"
+  loop_control: 
+    loop_var: sysctl
+
+- name: Remove Undeclared Sysctls
+  sysctl:
+    name: "{{ sysctl }}"
+    state: absent
+    sysctl_file: "{{ sysctl_file.path }}"
+  when: raw_sysctl_values.stderr == "" and  sysctl not in target_sysctl_values
+  with_items: "{{ current_sysctl_values }}"
+  loop_control: 
+    loop_var: sysctl
+
+    #- name:
+    #file:
+    #path: "{{ sysctl_file.path }}"
+    #state: touch
+
+- name: Add Sysctls to File
+  sysctl:
+    name: "{{ sysctl.name }}"
+    value: "{{ sysctl.value }}"
+    state: present
+    sysctl_file: "{{ sysctl_file.path }}"
+    reload: yes
+  with_items: "{{ sysctl_file.sysctls }}"
+  loop_control: 
+    loop_var: sysctl
+  

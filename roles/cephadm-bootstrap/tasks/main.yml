@@ -1,0 +1,44 @@
+---
+- name: "Choose mon ip"
+  block:
+    - name: "data"
+      set_fact:
+        mon_tmp_ip: "{{ hostvars[inventory_hostname]['ansible_facts']['default_ipv4']['address'] }}"
+      when: "'mgmt-servers' not in group_names"
+
+    - name: "management"
+      set_fact:
+        mon_tmp_ip: "{{ hostvars[inventory_hostname]['ansible_' + storage_interface ]['ipv4']['address'] }}"
+      when: "'mgmt-servers' in group_names"
+
+- name: "Bootstrap First Node in The Cluster"
+  shell:
+    cmd: cephadm --image {{ image_registry }} bootstrap --mon-ip={{ mon_tmp_ip }} --initial-dashboard-password={{ ceph_dashboard_pass }} --dashboard-password-noupdate --allow-fqdn-hostname --registry-url={{ registry_url }} --registry-username='robot$ceph-5' --registry-password={{ harbor_password }} --skip-monitoring-stack
+  register: bootstrap_out
+  ignore_errors: true
+
+- name: "Inform In Case Cluster Exists"
+  debug:
+    msg: "Can't bootsrap a new Cluster when one already exists"
+  when: bootstrap_out.rc is defined and bootstrap_out.rc == 1 and "delete or pass --allow-overwrite to overwrite" in bootstrap_out.stderr
+
+- name: "Fail if Unexpected Error Has Occured"
+  fail:
+    msg: "An Unexpected Error Has Occured"
+  when: bootstrap_out.rc is not defined or (bootstrap_out.rc != 0 and "delete or pass --allow-overwrite to overwrite" not in bootstrap_out.stderr)
+
+- name: "Set Public Network"
+  shell:
+    cmd: ceph config set global public_network {{ public_network }} && ceph orch daemon reconfig mon.{{ inventory_hostname }}
+
+- name: "Set Cluster Network"
+  shell:
+    cmd: ceph config set global cluster_network {{ cluster_network }} && ceph orch daemon reconfig mon.{{ inventory_hostname }}
+
+- name: "Enable The Ceph MGR Prometheus Module"
+  shell:
+    cmd: ceph mgr module enable prometheus
+
+- name: "Enable Logging to File"
+  shell:
+    cmd: ceph config set global log_to_file {{ log_to_file }} && ceph config set global mon_cluster_log_to_file {{ log_to_file }} && ceph config set global log_to_stderr {{ not log_to_file }} && ceph config set global mon_cluster_log_to_stderr {{ not log_to_file }}

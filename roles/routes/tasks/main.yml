@@ -1,0 +1,29 @@
+---
+
+- name: "Enable all the required repositoris"
+  command:
+    "yum-config-manager --enable rhel-7-server-optional-rpms"
+
+- name: "install NetworkManager-dispatcher-routing-rules"
+  yum:
+    name: "NetworkManager-dispatcher-routing-rules"
+    state: "installed"
+
+- name: "Add routes and rules"
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - src: "rule.j2"
+      dest: "/etc/sysconfig/network-scripts/rule-{{ lb_interface }}"
+    - src: "route.j2"
+      dest: "/etc/sysconfig/network-scripts/route-{{ lb_interface }}"
+  notify:
+    - "restart network"
+
+- name: "start NetworkManager-dispatcher"
+  service:
+    name: "NetworkManager-dispatcher"
+    state: "restarted"
+    enabled: yes
+...

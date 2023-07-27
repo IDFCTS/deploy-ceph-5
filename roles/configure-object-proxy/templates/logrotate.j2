@@ -1,0 +1,13 @@
+{{ haproxy_log_dir }}/*.log {
+    rotate 7
+    size 1500M
+    missingok
+    notifempty
+    compress
+    create 0644 haproxy haproxy
+    sharedscripts
+    postrotate
+        /bin/kill -HUP `cat /var/run/syslogd.pid 2> /dev/null` 2> /dev/null || true
+        /bin/kill -HUP `cat /var/run/rsyslogd.pid 2> /dev/null` 2> /dev/null || true
+    endscript
+}

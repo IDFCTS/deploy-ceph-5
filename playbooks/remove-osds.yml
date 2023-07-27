@@ -1,0 +1,15 @@
+---
+- name: Remove osds
+  hosts: bootstraps
+  become: true
+  tasks:
+    - name: Fail if still has osd label
+      fail:
+        msg: "{{ item }} still in the osds group - make sure you deleted the osd label with the rm-host playbook"
+      when: osd_group in hostvars[item].group_names
+      with_items: "{{ groups[servers_group_name] }}"
+      
+    - name: Set the osds to remove
+      shell:
+        cmd: for osd_id in $(ceph orch ps {{ item }} --daemon_type osd | grep osd | awk '{print $1}' | cut -c 5-); do ceph orch osd rm $osd_id; done
+      with_items: "{{ groups[servers_group_name] }}"

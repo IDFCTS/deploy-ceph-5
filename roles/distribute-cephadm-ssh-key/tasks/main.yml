@@ -1,0 +1,26 @@
+---
+- name: "Get Public Cluser SSH Key"
+  shell:
+    cmd: cephadm shell -- ceph cephadm get-pub-key > /tmp/ceph.pub
+  delegate_to: "{{ bootstraper }}"
+  run_once: true
+
+- name: "Fetch Public Key From Bootstraper"
+  fetch:
+    src: /tmp/ceph.pub
+    dest: /tmp/ceph.pub
+    flat: yes
+  delegate_to: "{{ bootstraper }}"
+  run_once: true
+
+- name: "Add Key to cloud-user Authorized Keys"
+  lineinfile:
+    state: present
+    path: /home/{{ cephadm_ssh_user }}/.ssh/authorized_keys
+    line: "{{ lookup('file', '/tmp/ceph.pub') }}"
+
+- name: "Set SSH User to cloud-user"
+  shell:
+    cmd: cephadm shell -- ceph cephadm set-user {{ cephadm_ssh_user }}
+  delegate_to: "{{ bootstraper }}"
+  run_once: true

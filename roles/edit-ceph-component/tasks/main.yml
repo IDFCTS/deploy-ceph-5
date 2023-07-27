@@ -1,0 +1,87 @@
+---
+- name: fail if mode is not defined
+  fail: 
+    msg: "The variable mode is mandatory, with the options rm/add"
+  when:
+    - mode is not defined
+    - mode != "rm"
+    - mode != "add"
+
+- name: check whether the node exists
+  include: check.yml
+  with_items: "{{ groups[servers_group_name] }}"
+  when: mode == "add"
+
+- name: add labels to the host
+  block:
+    - name: add admin label
+      shell:
+        cmd: ceph orch host label {{ mode }} {{ item }} _admin
+      when: admin_group in hostvars[item].group_names
+      with_items: "{{ groups[servers_group_name] }}"
+
+    - name: add mon label
+      shell:
+        cmd: ceph orch host label {{ mode }} {{ item }} mon
+      when: mon_group in hostvars[item].group_names
+      with_items: "{{ groups[servers_group_name] }}"
+
+    - name: add mgr label
+      shell:
+        cmd: ceph orch host label {{ mode }} {{ item }} mgr
+      when: mgr_group in hostvars[item].group_names
+      with_items: "{{ groups[servers_group_name] }}"
+
+    - name: add osd label
+      shell:
+        cmd: ceph orch host label {{ mode }} {{ item }} osd
+      when: osd_group in hostvars[item].group_names
+      with_items: "{{ groups[servers_group_name] }}"
+
+    - name: add rgw label
+      shell:
+        cmd: ceph orch host label {{ mode }} {{ item }} rgw_{{ rgw_realm }}_{{ rgw_zone }}
+      when: rgw_group is defined and rgw_group in hostvars[item].group_names
+      with_items: "{{ groups[servers_group_name] }}"
+  when: mode == "add"
+
+- name: "rm labels from the host"
+  block:
+    - name: rm admin label
+      shell:
+        cmd: ceph orch host label {{ mode }} {{ item }} _admin
+      when: admin_group not in hostvars[item].group_names
+      with_items: "{{ groups[servers_group_name] }}"
+
+    - name: rm mon label
+      shell:
+        cmd: ceph orch host label {{ mode }} {{ item }} mon
+      when: mon_group not in hostvars[item].group_names
+      with_items: "{{ groups[servers_group_name] }}"
+      
+    - name: rm mgr label
+      shell:
+        cmd: ceph orch host label {{ mode }} {{ item }} mgr
+      when: mgr_group not in hostvars[item].group_names
+      with_items: "{{ groups[servers_group_name] }}"
+
+    - name: rm osd label
+      shell:
+        cmd: ceph orch host label {{ mode }} {{ item }} osd
+      when: osd_group not in hostvars[item].group_names
+      with_items: "{{ groups[servers_group_name] }}"
+
+    - name: rm rgw label
+      shell:
+        cmd: ceph orch host label {{ mode }} {{ item }} rgw_{{ rgw_realm }}_{{ rgw_zone }}
+      when: rgw_group is defined and rgw_group not in hostvars[item].group_names
+      with_items: "{{ groups[servers_group_name] }}"
+  when: mode == "rm"
+
+- name: remove the hosts
+  shell:
+    cmd: ceph orch host {{ mode }} {{ item }}
+  when: 
+    - mode == "rm"
+    - cluster_group not in hostvars[item].group_names
+  with_items: "{{ groups[servers_group_name] }}"

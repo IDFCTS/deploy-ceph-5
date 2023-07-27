@@ -1,0 +1,17 @@
+- name: create xfs on the disk
+  filesystem:
+    fstype: xfs 
+    dev: "{{ item.device }}"
+
+- name: mount the rbd image
+  mount:
+    path: "{{ item.path }}"
+    src: "{{ item.device }}"
+    fstype: xfs
+    opts: noauto
+    state: mounted
+
+- name: Add mount to fstab
+  lineinfile:
+    path: '/etc/fstab'
+    line: "{{ item.device }} {{ item.path }} xfs noauto 0 0"

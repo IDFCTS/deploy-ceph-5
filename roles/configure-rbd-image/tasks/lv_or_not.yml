@@ -1,0 +1,12 @@
+- name: create mount's directories
+  file: 
+    path: "{{ item.path }}"
+    state: directory
+
+- name: Configure for lv
+  include: lv_based.yml
+  when: item.lv_name is defined 
+
+- name: Configure without lv
+  include: not_lv_based.yml
+  when: item.lv_name is not defined
