@@ -49,7 +49,7 @@
 
 - name: "enable the {{ item.application }} application"
   shell:
-    cmd: ceph osd pool application enable {{ item.name }} {{ item.application }}
+    cmd: ceph osd pool application enable {{ item.name }} {{ item.application }} --yes-i-really-mean-it
   when: item.application is defined
 
 - name: "set pg_autoscaler"
@@ -57,7 +57,7 @@
     - shell:
         cmd: ceph mgr module enable pg_autoscaler
     - shell:
-        cmd: ceph osd pool set {{ item.name }} pg_autoscale_mode {{ item.autoscale_mode }}
+        cmd: ceph osd pool set {{ item.name }} pg_autoscale_mode on
   when: item.autoscale_mode is defined
 
 - name: "set crush_rule id"

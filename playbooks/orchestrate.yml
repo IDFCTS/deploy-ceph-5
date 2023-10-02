@@ -4,25 +4,6 @@
     - cephadm-orchestrate
   become: true
 
-- hosts: 
-  roles:
-    - configure-lvm
-  become: true
-
-#- hosts: #prod cache hosts
-#  roles:
-#    # - configure-rbd-image -> Variables not configured
-#    # - configure-service-rbd-usage
-#  become: true
-  
-- hosts: caches
-  roles:
-    - configure-nginx-cache
-    - configure-keepalive
-  tags: 
-    - configure-cache
-  become: true
-
 - hosts: mgmt-proxies
   roles:
     - routes

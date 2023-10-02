@@ -4,6 +4,8 @@ service_id: {{ rgw_realm }}.{{ rgw_zone }}
 placement:
   label: "rgw_{{ rgw_realm }}_{{ rgw_zone }}"
 spec:
+  rgw_frontend_port: {{ rgw_port }}
+  rgw_frontend_type: "beast endpoint=0.0.0.0:{{ rgw_port }} tcp_nodelay=1"
   rgw_realm: {{ rgw_realm }}
   rgw_zone: {{ rgw_zone }}
 networks:

@@ -1,0 +1,51 @@
+---
+image_registry: "quay.med.one:8443/storage/rhceph:5-416"
+registry_url: "quay.med.one:8443"
+
+# Groups
+cluster_group: obj-mo
+admin_group: "obj-mo-admins"
+mon_group: "obj-mo-mons"
+mgr_group: "obj-mo-mgrs"
+osd_group: "obj-mo-osds"
+rgw_group: "obj-mo-rgws"
+servers_group_name: "{{ cluster_group }}"
+
+severity: "crit"
+
+dedicated_cpu_num: 2
+yum_endpoint: yum.med.one
+
+binds:
+  - port: 443
+    use_https: true
+    cert_name: storage.med.one.crt
+    cert: "{{ proxy_cert }}"
+
+backends:
+  - name: regular
+    servers: 
+      - address: '192.168.15.31'
+        port: "{{ rgw_port }}"
+        name: 'vmmoobj01'
+      - address: '192.168.15.32'
+        port: "{{ rgw_port }}"
+        name: 'vmmoobj02'
+      - address: '192.168.15.33'
+        port: "{{ rgw_port }}"
+        name: 'vmmoobj03'
+
+default_backend: regular
+
+repofiles:
+  - name: "rhel-8"
+    repo_sections:
+      - name: "rhel-8-for-x86_64-appstream-rpms"
+        url: "https://yum.med.one/rhel-8/rhel-8-for-x86_64-appstream-rpms/"
+      - name: "rhel-8-for-x86_64-baseos-rpms"
+        url: "https://yum.med.one/rhel-8/rhel-8-for-x86_64-baseos-rpms/"
+      - name: "ansible-2-for-rhel-8-x86_64-rpms"
+        url: "https://yum.med.one/rhel-8/ansible-2-for-rhel-8-x86_64-rpms/"
+  
+public_id_key:
+        ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDK3JvdB0SVzGMoQyrtJ4B/J4a/rk6nQo0641t6snyATq0yVRtLGryi6AkunzBJpD7UiTRDdWg2Ap5aMOU0aJuOFQ+QQ7sB5ukXGZCFQnyKIpkt8dn8lxGHamxU5vg0HqfNjPgmKD02UrRi0qaqKTnKysDrv9bOtiKSXi1M/RtpIEKwwingHIDWnEOYrahSttW1ij6TMZGY3ZTdV4JNzIBUxaQRV0HXfYFf0urWEF6O9HphioOaA7scKvEShUl+m3lzI6vdLPwLrrRNOcaTJTarXW04BA6CSbBjiCtN0pdHaTSKPS3nYdRIlHFBLfRUhXeFF9sK2lLQ5Nyp/I6H9/9wCBIEnrvG1VCz4A+nALo3MNUvlBF6OXYpn0sJOjWub0IGHLZoGQlh4VQ2igF2D6sO1auDC5vbE0p/pSMMNHKluZuge1zcx371q8t9fgvg1Zj8tP39w+Sl9QvbrJlKbgPzhe2Tf5BYdnPgAkiah6M95TdSVZVSBtOjUb+Bl84C2EM=

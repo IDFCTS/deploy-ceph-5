@@ -1,113 +1,113 @@
 ---
-- src: https://gitlab.example.com/idfcts/configure-time.git
-  scm: git
-  name: configure-time
-
-- src: https://gitlab.example.com/idfcts/configure-resolv.git
-  scm: git
-  name: configure-resolv
-
-- src: https://gitlab.example.com/idfcts/storage/fio-test.git
-  scm: git
-  name: fio-test
-
-- src: https://gitlab.example.com/idfcts/configure-node-exporter.git
-  scm: git
-  name: configure-node-exporter
-
-- src: https://gitlab.example.com/idfcts/configure-prometheus-target.git
-  scm: git
-  name: configure-prometheus-target
-
-- src: https://gitlab.example.com/idfcts/prometheus-safe-change.git
-  scm: git
-  name: prometheus-safe-change
-
-- src: https://gitlab.example.com/idfcts/storage/failed-disks-exporter.git
-  scm: git
-  name: search_failed_disks
-
-- src: https://gitlab.example.com/idfcts/storage/deploy-loki-agents.git
-  scm: git
-  name: deploy-loki-agents
-
-- src: https://gitlab.example.com/idfcts/storage/configure-data-ca.git
-  scm: git
-  name: configure-data-ca
-
-- src: https://gitlab.example.com/idfcts/storage/configure-network-nmcli.git
-  scm: git
-  name: configure-network-nmcli
-
-- src: https://gitlab.example.com/idfcts/storage/configure-custom-dnf.git
+- src: https://gitlab.com/idfcts/storage/configure-custom-dnf.git
   scm: git
   name: configure-custom-dnf
 
-- src: https://gitlab.example.com/idfcts/configure-lldpad.git
+- src: https://gitlab.com/idfcts/configure-time.git
+  scm: git
+  name: configure-time
+
+- src: https://gitlab.com/idfcts/configure-resolv.git
+  scm: git
+  name: configure-resolv
+
+- src: https://gitlab.com/idfcts/storage/fio-test.git
+  scm: git
+  name: fio-test
+
+- src: https://gitlab.com/idfcts/configure-node-exporter.git
+  scm: git
+  name: configure-node-exporter
+
+- src: https://gitlab.com/idfcts/configure-prometheus-target.git
+  scm: git
+  name: configure-prometheus-target
+
+- src: https://gitlab.com/idfcts/prometheus-safe-change.git
+  scm: git
+  name: prometheus-safe-change
+
+- src: https://gitlab.com/idfcts/storage/failed-disks-exporter.git
+  scm: git
+  name: search_failed_disks
+
+- src: https://gitlab.com/idfcts/storage/deploy-loki-agents.git
+  scm: git
+  name: deploy-loki-agents
+
+- src: https://gitlab.com/idfcts/storage/configure-data-ca.git
+  scm: git
+  name: configure-data-ca
+
+- src: https://gitlab.com/idfcts/storage/configure-network-nmcli.git
+  scm: git
+  name: configure-network-nmcli
+
+- src: https://gitlab.com/idfcts/configure-lldpad.git
   scm: git
   name: configure-lldpad
 
-- src: https://gitlab.example.com/idfcts/storage/set-prompt.git
+- src: https://gitlab.com/idfcts/storage/set-prompt.git
   scm: git
   name: set-prompt
 
-- src: https://gitlab.example.com/idfcts/storage/configure-dmesg.git
+- src: https://gitlab.com/idfcts/storage/configure-dmesg.git
   scm: git
   name: configure-dmesg
 
-- src: https://gitlab.example.com/idfcts/storage/add-cimc-a-record.git
+- src: https://gitlab.com/idfcts/storage/add-cimc-a-record.git
   scm: git
   name: add-cimc-a-record
 
-- src: https://gitlab.example.com/idfcts/scs/add-ilo-or-cimc-to-list.git
+- src: https://gitlab.com/idfcts/scs/add-ilo-or-cimc-to-list.git
   scm: git
   name: add-ilo-or-cimc-to-list
 
-- src: https://gitlab.example.com/idfcts/storage/configure-service-rbd-usage.git
+- src: https://gitlab.com/idfcts/storage/configure-service-rbd-usage.git
   scm: git
   name: configure-service-rbd-usage
 
-- src: https://gitlab.example.com/idfcts/storage/configure-rbd-image.git
+- src: https://gitlab.com/idfcts/storage/configure-rbd-image.git
   scm: git
   name: configure-rbd-image
 
-- src: https://gitlab.example.com/idfcts/storage/configure-firewalld.git
+- src: https://gitlab.com/idfcts/storage/configure-firewalld.git
   scm: git
   name: configure-firewalld
 
-- src: https://gitlab.example.com/idfcts/storage/dnf-update-all.git
+- src: https://gitlab.com/idfcts/storage/dnf-update-all.git
   scm: git
   name: dnf-update-all
 
-- src: https://gitlab.example.com/idfcts/storage/configure-sysctl.git
+- src: https://gitlab.com/idfcts/storage/configure-sysctl.git
   scm: git
   name: configure-sysctl
 
-- src: https://gitlab.example.com/idfcts/storage/deploy-additional-metrics.git
+- src: https://gitlab.com/idfcts/storage/deploy-additional-metrics.git
   scm: git
   name: deploy-additional-metrics
   
-- src: https://gitlab.example.com/idfcts/storage/create-dns-record.git
+- src: https://gitlab.com/idfcts/storage/create-dns-record.git
   scm: git
   name: create-dns-record
 
-- src: https://gitlab.example.com/idfcts/storage/add-pxe-target.git
+- src: https://gitlab.com/idfcts/storage/add-pxe-target.git
   scm: git
   name: add-pxe-target
 
-- src: https://gitlab.example.com/idfcts/cci/misc-automations/install_xmljson.git
+- src: https://gitlab.com/idfcts/cci/misc-automations/install_xmljson.git
   scm: git
   name: install_xmljson
 
-- src: https://gitlab.example.com/idfcts/storage/pxe_boot.git
+- src: https://gitlab.com/idfcts/storage/pxe_boot.git
   scm: git
   name: pxe_boot
 
-- src: https://gitlab.example.com/idfcts/cci/misc-automations/certificates-monitoring.git
+- src: https://gitlab.com/idfcts/cci/misc-automations/certificates-monitoring.git
   scm: git
   name: certificates-monitoring 
 
-- src: https://gitlab.example.com/idfcts/storage/check_servers_connectivity.git
+- src: https://gitlab.com/idfcts/storage/check_servers_connectivity.git
   scm: git
   name: check_servers_connectivity
 ...

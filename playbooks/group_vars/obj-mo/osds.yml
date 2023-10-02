@@ -1,0 +1,6 @@
+osd_memory_target: 4G
+
+date_device_size: 3TB:4TB
+
+data_devices:
+ - /dev/vdb

@@ -19,3 +19,5 @@ firewall_ports:
   - "{{ cache_port }}/tcp"
   - "443/tcp"
   - "9090/tcp"
+
+rgw_port: 80

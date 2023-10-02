@@ -1,0 +1,12 @@
+---
+- name: restart mon
+  shell:
+    cmd: ceph orch restart mon
+
+- name: restart rgw
+  shell:
+    cmd: "ceph orch restart rgw.{{ rgw_realm }}.{{ rgw_zone }}"
+
+- name: restart mgr
+  shell:
+    cmd: ceph orch restart mgr

@@ -1,10 +1,7 @@
 ---
 # tasks file for configure-ceph
 
-- name: mgr configuration
-  include_tasks: set_configuration.yml
-  when: service.target in hostvars[inventory_hostname].group_names
-  loop: "{{ ceph_configuration }}"
-  loop_control:
-    loop_var: "service"
-
+- include_tasks: set_configuration.yml
+  with_subelements:
+    - "{{ ceph_configurations }}"
+    - configurations

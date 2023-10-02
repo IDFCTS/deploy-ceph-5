@@ -1,20 +1,34 @@
 ---
-- hosts: ceph-servers
+- hosts: all
   roles:
     - configure-cloud-user
   vars:
     ansible_ssh_user: root
-    ansible_ssh_pass: "{{ after_pxe_root_password }}"
+    ansible_ssh_pass: qwer1234
   become: yes
   ignore_unreachable: yes
 
-- hosts: ceph-servers
-  strategy: free
-  roles:
-    - configure-network-nmcli
-  become: true
+  #- hosts: all
+  #  become: true
+  #  tasks:
+  #    - name: Configure sync interface
+  #      shell:
+  #        cmd: "nmcli con del {{ team.name }} && nmcli con add type ethernet ifname {{ team.name }} con-name {{ team.name }} ipv4.method {{ team.method | default('manual') }} ipv4.addresses {{ ansible_host | replace('15', '31') }}/24 ipv4.gateway {{ team.gw4 }} ipv4.never-default yes"
+  #      loop: "{{ teams }}"
+  #      loop_control:
+  #        loop_var: team              
+  
+- hosts: all
+  #  pre_tasks:
+  #    - name: Configure CA
+  #      copy:
+  #        src: "{{ item }}"
+  #        dest: "{{ item }}"
+  #        force: yes
+  #      loop:
+  #        - /etc/pki/ca-trust/source/anchors/cert.pem
+  #        - /etc/pki/ca-trust/extracted/pem/
 
-- hosts: ceph-servers
   roles:
     - configure-resolv
     - configure-data-ca
@@ -23,17 +37,17 @@
     - configure-lldpad
     - configure-sysctl
     - configure-dmesg
-    - check_servers_connectivity
-    - create-dns-record
+#    - check_servers_connectivity
+#    - create-dns-record
   become: true
     
-- hosts: ceph-servers
+- hosts: all
   gather_facts: no
   roles:
     - set-prompt
   become: yes
 
-- hosts: ceph-servers
+- hosts: all
   serial: 1
   roles:
     - dnf-update-all
