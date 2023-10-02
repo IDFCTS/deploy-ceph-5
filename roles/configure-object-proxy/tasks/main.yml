@@ -22,7 +22,7 @@
 - name: "Install haproxy20 package"
   yum:
     name:
-      - haproxy20
+      - haproxy
       - lvm2
     state: latest
 
@@ -31,20 +31,6 @@
     path: /usr/lib/systemd/system/haproxy20.service
     state: absent
   
-- name: "Creating VG for logs"
-  lvg:
-    vg: "{{ var_log_vg }}"
-    pvs: "{{ pv_disks }}"
-  ignore_errors: yes
-
-- name: "Increase the size of /var/log"
-  lvol:
-    vg: "{{ var_log_vg }}"
-    lv: "{{ var_log_lv }}"
-    size: "+100%FREE"
-    resizefs: true
-  ignore_errors: yes
-
 - name: "Allow different forwording port in SELinux"
   shell:
     cmd: "setsebool -P haproxy_connect_any 1"

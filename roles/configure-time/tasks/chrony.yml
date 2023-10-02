@@ -1,0 +1,25 @@
+---
+- name: Install chrony package
+  yum:
+    state: present
+    name: chrony
+
+- name: Check if ntpd exists
+  stat:
+    path: "{{ ntpd_system_path }}"
+  register: service_status
+
+- name: Stop ntpd service
+  service: 
+    state: stopped
+    name: ntpd
+    enabled: no
+  when: service_status.stat.exists
+  notify: restart chronyd
+
+- name: Start and enable chronyd
+  service:
+    state: started
+    name: chronyd
+    enabled: yes
+...

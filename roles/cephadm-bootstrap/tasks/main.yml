@@ -13,7 +13,7 @@
 
 - name: "Bootstrap First Node in The Cluster"
   shell:
-    cmd: cephadm --image {{ image_registry }} bootstrap --mon-ip={{ mon_tmp_ip }} --initial-dashboard-password={{ ceph_dashboard_pass }} --dashboard-password-noupdate --allow-fqdn-hostname --registry-url={{ registry_url }} --registry-username='robot$ceph-5' --registry-password={{ harbor_password }} --skip-monitoring-stack
+    cmd: cephadm --image {{ image_registry }} bootstrap --mon-ip={{ mon_tmp_ip }} --initial-dashboard-password={{ ceph_dashboard_pass }} --dashboard-password-noupdate --allow-fqdn-hostname --registry-url={{ registry_url }} --registry-username='storage+storage_robot' --registry-password={{ harbor_password }} --skip-monitoring-stack
   register: bootstrap_out
   ignore_errors: true
 

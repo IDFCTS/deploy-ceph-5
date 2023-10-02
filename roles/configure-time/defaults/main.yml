@@ -1,0 +1,4 @@
+---
+domain_timezone: Asia/Jerusalem
+ntpd_system_path: /usr/lib/systemd/system/ntpd.service
+...

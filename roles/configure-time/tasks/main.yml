@@ -1,0 +1,7 @@
+---
+- name: Configure timezone
+  include_tasks: timezone.yml
+
+- name: Configure chrony
+  include_tasks: chrony.yml
+...

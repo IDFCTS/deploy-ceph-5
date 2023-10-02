@@ -1,0 +1,163 @@
+---
+image_registry: "quay.med.one:8443/storage/rhceph:5-416"
+registry_url: "quay.med.one:8443"
+
+# Groups
+cluster_group: obj-mo
+admin_group: "obj-mo-admins"
+mon_group: "obj-mo-mons"
+mgr_group: "obj-mo-mgrs"
+osd_group: "obj-mo-osds"
+rgw_group: "obj-mo-rgws"
+servers_group_name: "{{ cluster_group }}"
+
+severity: "crit"
+
+bootstraper: vmmoobj01
+
+public_network: 192.168.15.0/24
+cluster_network: 192.168.31.0/24
+
+
+# Irrelevant because they use the virtual ip
+#vip_site: 192.168.1.88
+#vip_site: 192.168.88.88
+
+storage_interface: "enp1s0"
+
+crush_hierarchy:
+  - name: default
+    type: root
+    children:
+      - name: vmmoobj01
+        type: host
+      - name: vmmoobj02
+        type: host
+      - name: vmmoobj03
+        type: host
+
+rgw_realm: medone
+rgw_zone: medone
+rgw_zonegroup: medone
+ceph_configurations:
+  - service_name: client.rgw.{{ rgw_realm }}.{{ rgw_zone }}
+    notify: rgw
+    configurations:
+      - key: rgw_dns_name
+        value: "storage.med.one"
+      - key: rgw_num_rados_handles
+        value: 4
+  - service_name: global
+    configurations:
+      - key: rgw_user_default_quota_max_objects
+        value: 5000
+      - key: rgw_user_default_quota_max_size
+        value: 5368709120
+  - service_name: osd
+    notify: false
+    configurations:
+      - key: bluefs_buffered_io
+        value: false
+        
+
+rules:
+  - name: osd_replication
+    type: replicated
+    seperation: host
+    root: default
+
+pools:
+  - name: device_health_metrics
+    application: mgr_devicehealth
+    autoscale_mode: on
+    mode: replicated
+    replicate: 3
+    rule_name: osd_replication
+
+  - name: .rgw.root
+    application: rgw
+    autoscale_mode: on
+    mode: replicated
+    replicate: 3
+    rule_name: osd_replication
+
+  - name: medone.rgw.log
+    application: rgw
+    autoscale_mode: on
+    mode: replicated
+    replicate: 3
+    pgs: 16
+    rule_name: osd_replication
+
+  - name: medone.rgw.control
+    application: rgw
+    autoscale_mode: on
+    mode: replicated
+    replicate: 3
+    pgs: 16
+    rule_name: osd_replication
+
+  - name: medone.rgw.meta
+    application: rgw
+    autoscale_mode: on
+    mode: replicated
+    replicate: 3
+    pgs: 16
+    rule_name: osd_replication
+
+  - name: medone.rgw.buckets.index
+    application: rgw
+    autoscale_mode: on
+    mode: replicated
+    replicate: 3
+    pgs: 16
+    rule_name: osd_replication
+
+  - name: medone.rgw.buckets.data
+    pgs: 64
+    applicat1on: rgw
+    autoscale_mode: warn
+    mode: replicated
+    replicate: 2
+    rule_name: osd_replication
+
+  - name: medone.rgw.bucket.non-ec
+    application: rgw
+    autoscale_mode: on
+    mode: replicated
+    replicate: 2
+    pgs: 16
+    rule_name: osd_replication
+
+teams:
+  - name: "enp7s0"
+    team_name: "sync"
+    type: "lacp"
+    raw_subnet: "192.168.31"
+    subnet: "192.168.31"
+    prefix: 24
+    gw4: "192.168.31.254"
+    mtu: 9000
+    ifs:
+      - "enp7s0"
+    runner: "lacp"
+
+
+repofiles:
+  - name: "rhel-8"
+    repo_sections:
+      - name: "rhel-8-for-x86_64-appstream-rpms"
+        url: "https://yum.med.one/rhel-8/rhel-8-for-x86_64-appstream-rpms/"
+      - name: "rhel-8-for-x86_64-baseos-rpms"
+        url: "https://yum.med.one/rhel-8/rhel-8-for-x86_64-baseos-rpms/"
+  - name: "ceph-5"
+    repo_sections:
+      - name: "rhceph-5-tools-for-rhel-8-x86_64-rpms"
+        url: "https://yum.med.one/ceph-5/rhceph-5-tools-for-rhel-8-x86_64-rpms/"
+
+cluster_ips: #needs_to_be_changed
+  
+cimc_or_ilo: ilo
+ilo_version: 5
+public_id_key:
+        ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDK3JvdB0SVzGMoQyrtJ4B/J4a/rk6nQo0641t6snyATq0yVRtLGryi6AkunzBJpD7UiTRDdWg2Ap5aMOU0aJuOFQ+QQ7sB5ukXGZCFQnyKIpkt8dn8lxGHamxU5vg0HqfNjPgmKD02UrRi0qaqKTnKysDrv9bOtiKSXi1M/RtpIEKwwingHIDWnEOYrahSttW1ij6TMZGY3ZTdV4JNzIBUxaQRV0HXfYFf0urWEF6O9HphioOaA7scKvEShUl+m3lzI6vdLPwLrrRNOcaTJTarXW04BA6CSbBjiCtN0pdHaTSKPS3nYdRIlHFBLfRUhXeFF9sK2lLQ5Nyp/I6H9/9wCBIEnrvG1VCz4A+nALo3MNUvlBF6OXYpn0sJOjWub0IGHLZoGQlh4VQ2igF2D6sO1auDC5vbE0p/pSMMNHKluZuge1zcx371q8t9fgvg1Zj8tP39w+Sl9QvbrJlKbgPzhe2Tf5BYdnPgAkiah6M95TdSVZVSBtOjUb+Bl84C2EM=

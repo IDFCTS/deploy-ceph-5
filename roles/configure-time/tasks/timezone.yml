@@ -1,0 +1,5 @@
+---
+- name: Set the timezone
+  community.general.timezone:
+    name: "{{ domain_timezone }}"
+...
